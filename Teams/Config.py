@@ -20,24 +20,36 @@ def load_config():
     if CONFIG_FILE.exists():
         with open(CONFIG_FILE, 'r', encoding='UTF-8') as yaml_file:
             CONFIG = yaml.safe_load(yaml_file) or {
-                'Teams Webhook': None,
+                'Teams Webhook': '',
                 'Game Number': -1,
-                'API Code': None,
+                'API Code': '',
                 'Tick Rate': 8,
                 'Last Tick': -1,
-                'Players': {},
-                'Teams': {}
+                'Players': {
+                    'Alias 1': 'Name 1'
+                },
+                'Teams': {
+                    'Team 1': [
+                        'Alias 1'
+                    ]
+                }
             }
     else:
         CONFIG_FILE.touch()
         CONFIG = {
-            'Teams Webhook': None,
+            'Teams Webhook': '',
             'Game Number': -1,
-            'API Code': None,
+            'API Code': '',
             'Tick Rate': 8,
             'Last Tick': -1,
-            'Players': {},
-            'Teams': {}
+            'Players': {
+                'Alias 1': 'Name 1'
+            },
+            'Teams': {
+                'Team 1': [
+                    'Alias 1'
+                ]
+            }
         }
     save_config()
 

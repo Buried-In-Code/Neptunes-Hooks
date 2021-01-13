@@ -1,6 +1,7 @@
 import logging
 import threading
 import time
+from argparse import ArgumentParser, Namespace
 from json.decoder import JSONDecodeError
 from typing import Dict, Any, List
 
@@ -15,9 +16,16 @@ LOGGER = logging.getLogger(__name__)
 TIMEOUT = 100
 
 
+def get_arguments() -> Namespace:
+    parser = ArgumentParser()
+    parser.add_argument('poll_rate', nargs='?', const=30, type=int, default=30)
+    return parser.parse_args()
+
+
 def main():
     try:
-        poll_thread = threading.Thread(target=thread_func, daemon=True)
+        args = get_arguments()
+        poll_thread = threading.Thread(target=thread_func, args=(args.poll_rate,), daemon=True)
         poll_thread.start()
         while True:
             time.sleep(100)
@@ -25,7 +33,7 @@ def main():
         LOGGER.info('Received Keyboard Interrupt, stopping threads')
 
 
-def thread_func():
+def thread_func(poll_rate: int):
     while True:
         np_response = np_request(
             game_number=CONFIG['Game Number'],
@@ -39,7 +47,7 @@ def thread_func():
             save_config()
         else:
             LOGGER.info("No need to update Teams yet")
-        time.sleep(30 * 60)
+        time.sleep(poll_rate * 60)
 
 
 def generate_players_card(data: Dict[str, Any]):
