@@ -19,42 +19,46 @@ TIMEOUT = 100
 def get_arguments() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument('poll_rate', nargs='?', const=30, type=int, default=30)
+    parser.add_argument('--testing', action='store_true')
     return parser.parse_args()
 
 
 def main():
     try:
         args = get_arguments()
-        poll_thread = threading.Thread(target=thread_func, args=(args.poll_rate,), daemon=True)
+        poll_thread = threading.Thread(target=thread_func, args=(args.poll_rate, args.testing,), daemon=True)
         poll_thread.start()
-        while True:
-            time.sleep(100)
+        while poll_thread.is_alive():
+            time.sleep(30)
     except (KeyboardInterrupt, SystemExit):
         LOGGER.info('Received Keyboard Interrupt, stopping threads')
 
 
-def thread_func(poll_rate: int):
+def thread_func(poll_rate: int, testing: bool):
     while True:
         np_response = np_request(
             game_number=CONFIG['Game Number'],
             code=CONFIG['API Code']
         )
         LOGGER.debug(f"Neptune's Response: {np_response}")
-        if np_response and np_response['tick'] > CONFIG['Last Tick']:
-            generate_players_card(np_response)
-            generate_teams_card(np_response)
-            CONFIG['Last Tick'] = np_response['tick']
-            save_config()
+        if np_response:
+            if np_response['tick'] > CONFIG['Last Tick'] or testing:
+                generate_players_card(np_response)
+                generate_teams_card(np_response)
+                CONFIG['Last Tick'] = np_response['tick']
+                save_config()
+            else:
+                LOGGER.info("No need to update Teams yet")
         else:
-            LOGGER.info("No need to update Teams yet")
-        if np_response['game_over'] != 0:
+            break
+        if np_response['game_over'] != 0 or testing:
             break
         time.sleep(poll_rate * 60)
 
 
 def generate_players_card(data: Dict[str, Any]):
     sorted_players = sorted(data['players'].values(),
-                            key=lambda x: (x['total_stars'], x['total_strength'], x['alias']),
+                            key=lambda x: (x['total_stars'], x['total_strength'], x['total_fleets'], x['alias']),
                             reverse=True)[:12]
     # region Alias Column
     alias_column = [
@@ -112,7 +116,7 @@ def generate_players_card(data: Dict[str, Any]):
     stars_column.extend([
         {
             'type': 'TextBlock',
-            'text': player['total_stars']
+            'text': f"{player['total_stars']:,}"
         } for player in sorted_players
     ])
     # endregion
@@ -127,22 +131,115 @@ def generate_players_card(data: Dict[str, Any]):
     ships_column.extend([
         {
             'type': 'TextBlock',
-            'text': player['total_strength']
+            'text': f"{player['total_strength']:,}"
         } for player in sorted_players
     ])
     # endregion
-    # region Active Column
-    active_column = [
+    # region Carriers Column
+    carriers_column = [
         {
             'type': 'TextBlock',
-            'text': 'Active',
+            'text': 'Carriers',
             'weight': 'Bolder'
         }
     ]
-    active_column.extend([
+    carriers_column.extend([
         {
             'type': 'TextBlock',
-            'text': player['conceded'] == 0
+            'text': f"{player['total_fleets']:,}"
+        } for player in sorted_players
+    ])
+    # endregion
+    sorted_players = sorted(data['players'].values(),
+                            key=lambda x: (x['total_economy'], x['total_industry'], x['total_science'], x['alias']),
+                            reverse=True)[:12]
+    # region Alias Column
+    alias_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Alias',
+            'weight': 'Bolder'
+        }
+    ]
+    alias_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': player['alias'] or '~'
+        } for player in sorted_players
+    ])
+    # endregion
+    # region Name Column
+    name_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Name',
+            'weight': 'Bolder'
+        }
+    ]
+    name_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': lookup_player(player['alias'] or '~') or '~'
+        } for player in sorted_players
+    ])
+    # endregion
+    # region Team Column
+    team_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Team',
+            'weight': 'Bolder'
+        }
+    ]
+    team_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': lookup_team(player['alias'] or '~') or '~'
+        } for player in sorted_players
+    ])
+    # endregion
+    # region Economy Column
+    economy_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Eco',
+            'weight': 'Bolder'
+        }
+    ]
+    economy_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': f"{player['total_economy']:,}"
+        } for player in sorted_players
+    ])
+    # endregion
+    # region Industry Column
+    industry_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Ind',
+            'weight': 'Bolder'
+        }
+    ]
+    industry_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': f"{player['total_industry']:,}"
+        } for player in sorted_players
+    ])
+    # endregion
+    # region Science Column
+    science_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Sci',
+            'weight': 'Bolder'
+        }
+    ]
+    science_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': f"{player['total_science']:,}"
         } for player in sorted_players
     ])
     # endregion
@@ -155,7 +252,8 @@ def generate_players_card(data: Dict[str, Any]):
         },
         {
             'type': 'TextBlock',
-            'text': f"Hello Players,\n\nWelcome to Turn {int(data['tick'] / CONFIG['Tick Rate'])}, here are the Players stats:"
+            'text': f"Hello Players,\n\nWelcome to Turn {int(data['tick'] / CONFIG['Tick Rate'])}, here are the Players stats:",
+            'wrap': True
         },
         {
             'type': 'ColumnSet',
@@ -187,15 +285,50 @@ def generate_players_card(data: Dict[str, Any]):
                 },
                 {
                     'type': 'Column',
-                    'items': active_column,
+                    'items': carriers_column,
                     'width': 'auto'
                 }
             ]
         },
         {
             'type': 'TextBlock',
-            'text': f"Looks like {sorted_players[0]['alias']} has the lead, with {sorted_players[1]['alias']} and {sorted_players[2]['alias']} on their heels.",
+            'text': '\n\n\n\n',
             'wrap': True
+        },
+        {
+            'type': 'ColumnSet',
+            'columns': [
+                {
+                    'type': 'Column',
+                    'items': alias_column,
+                    'width': 'stretch'
+                },
+                {
+                    'type': 'Column',
+                    'items': name_column,
+                    'width': 'stretch'
+                },
+                {
+                    'type': 'Column',
+                    'items': team_column,
+                    'width': 'stretch'
+                },
+                {
+                    'type': 'Column',
+                    'items': economy_column,
+                    'width': 'auto'
+                },
+                {
+                    'type': 'Column',
+                    'items': industry_column,
+                    'width': 'auto'
+                },
+                {
+                    'type': 'Column',
+                    'items': science_column,
+                    'width': 'auto'
+                }
+            ]
         }
     ])
 
@@ -207,6 +340,10 @@ def generate_teams_card(data: Dict[str, Any]):
         'Name': '~',
         'Stars': 0,
         'Ships': 0,
+        'Carriers': 0,
+        'Economy': 0,
+        'Industry': 0,
+        'Science': 0,
         'Active': False
     }
     for name, members in CONFIG['Teams'].items():
@@ -214,6 +351,10 @@ def generate_teams_card(data: Dict[str, Any]):
             'Name': name,
             'Stars': 0,
             'Ships': 0,
+            'Carriers': 0,
+            'Economy': 0,
+            'Industry': 0,
+            'Science': 0,
             'Active': False
         }
         for member in members:
@@ -221,6 +362,10 @@ def generate_teams_card(data: Dict[str, Any]):
             if player:
                 temp['Stars'] += player['total_stars']
                 temp['Ships'] += player['total_strength']
+                temp['Carriers'] += player['total_fleets']
+                temp['Economy'] += player['total_economy']
+                temp['Industry'] += player['total_industry']
+                temp['Science'] += player['total_science']
                 temp['Active'] = temp['Active'] or player['conceded'] == 0
         team_data.append(temp)
     teamless_count = 0
@@ -228,6 +373,10 @@ def generate_teams_card(data: Dict[str, Any]):
         if not lookup_team(player['alias']):
             no_team['Stars'] += player['total_stars']
             no_team['Ships'] += player['total_strength']
+            no_team['Carriers'] += player['total_fleets']
+            no_team['Economy'] += player['total_economy']
+            no_team['Industry'] += player['total_industry']
+            no_team['Science'] += player['total_science']
             no_team['Active'] = no_team['Active'] or player['conceded'] == 0
             teamless_count += 1
     if teamless_count > 0:
@@ -235,7 +384,9 @@ def generate_teams_card(data: Dict[str, Any]):
     if teamless_count >= len(data['players'].values()):
         return
     # endregion
-    sorted_teams = sorted(team_data, key=lambda x: (x['Stars'], x['Ships'], x['Name']), reverse=True)[:12]
+    sorted_teams = sorted(team_data,
+                          key=lambda x: (x['Stars'], x['Ships'], x['Carriers'], x['Name']),
+                          reverse=True)[:12]
     # region Name Column
     name_column = [
         {
@@ -262,7 +413,7 @@ def generate_teams_card(data: Dict[str, Any]):
     stars_column.extend([
         {
             'type': 'TextBlock',
-            'text': team['Stars']
+            'text': f"{team['Stars']:,}"
         } for team in sorted_teams
     ])
     # endregion
@@ -277,22 +428,85 @@ def generate_teams_card(data: Dict[str, Any]):
     ships_column.extend([
         {
             'type': 'TextBlock',
-            'text': team['Ships']
+            'text': f"{team['Ships']:,}"
         } for team in sorted_teams
     ])
     # endregion
-    # region Active Column
-    active_column = [
+    # region Carrier Column
+    carrier_column = [
         {
             'type': 'TextBlock',
-            'text': 'Active',
+            'text': 'Carriers',
             'weight': 'Bolder'
         }
     ]
-    active_column.extend([
+    carrier_column.extend([
         {
             'type': 'TextBlock',
-            'text': team['Active']
+            'text': f"{team['Carriers']:,}"
+        } for team in sorted_teams
+    ])
+    # endregion
+    sorted_teams = sorted(team_data,
+                          key=lambda x: (x['Economy'], x['Industry'], x['Science'], x['Name']),
+                          reverse=True)[:12]
+    # region Name Column
+    name_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Name',
+            'weight': 'Bolder'
+        }
+    ]
+    name_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': team['Name'] or '~'
+        } for team in sorted_teams
+    ])
+    # endregion
+    # region Economy Column
+    economy_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Eco',
+            'weight': 'Bolder'
+        }
+    ]
+    economy_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': f"{team['Economy']:,}"
+        } for team in sorted_teams
+    ])
+    # endregion
+    # region Industry Column
+    industry_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Ind',
+            'weight': 'Bolder'
+        }
+    ]
+    industry_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': f"{team['Industry']:,}"
+        } for team in sorted_teams
+    ])
+    # endregion
+    # region Science Column
+    science_column = [
+        {
+            'type': 'TextBlock',
+            'text': 'Sci',
+            'weight': 'Bolder'
+        }
+    ]
+    science_column.extend([
+        {
+            'type': 'TextBlock',
+            'text': f"{team['Science']:,}"
         } for team in sorted_teams
     ])
     # endregion
@@ -305,7 +519,8 @@ def generate_teams_card(data: Dict[str, Any]):
         },
         {
             'type': 'TextBlock',
-            'text': f"Hello Teams,\n\nWelcome to Turn {int(data['tick'] / CONFIG['Tick Rate'])}, here are the Teams stats:"
+            'text': f"Hello Teams,\n\nWelcome to Turn {int(data['tick'] / CONFIG['Tick Rate'])}, here are the Teams stats:",
+            'wrap': True
         },
         {
             'type': 'ColumnSet',
@@ -327,15 +542,39 @@ def generate_teams_card(data: Dict[str, Any]):
                 },
                 {
                     'type': 'Column',
-                    'items': active_column,
+                    'items': carrier_column,
                     'width': 'auto'
                 }
             ]
         },
         {
             'type': 'TextBlock',
-            'text': f"Looks like {sorted_teams[0]['Name']} has the lead, with {sorted_teams[1]['Name']} and {sorted_teams[2]['Name']} on their heels.",
-            'wrap': True
+            'text': "\n\n\n\n"
+        },
+        {
+            'type': 'ColumnSet',
+            'columns': [
+                {
+                    'type': 'Column',
+                    'items': name_column,
+                    'width': 'stretch'
+                },
+                {
+                    'type': 'Column',
+                    'items': economy_column,
+                    'width': 'auto'
+                },
+                {
+                    'type': 'Column',
+                    'items': industry_column,
+                    'width': 'auto'
+                },
+                {
+                    'type': 'Column',
+                    'items': science_column,
+                    'width': 'auto'
+                }
+            ]
         }
     ])
 

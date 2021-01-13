@@ -35,6 +35,7 @@ A simple app that sends Neptune's Pride Stats to a Teams Channel via webhook.
 | Argument | Type | Default | Example | Description |
 | -------- | ---- | ------- | ------- | ----------- |
 | Poll Rate | int | 30 | `python -m Teams 30` | Used to determine how long between polls to the Neptune's Pride API *(value in Minutes)* |
+| Testing | bool | False | `python -m Teams --testing` | Used to skip the tick check and run once |
 
 ## Socials
 [![Discord | The Playground](https://discord.com/api/v6/guilds/618581423070117932/widget.png?style=banner2)](https://discord.gg/nqGMeGg)  
