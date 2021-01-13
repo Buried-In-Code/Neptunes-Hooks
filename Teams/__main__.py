@@ -292,7 +292,7 @@ def generate_players_card(data: Dict[str, Any]):
         },
         {
             'type': 'TextBlock',
-            'text': '\n\n\n\n',
+            'text': '\n\n',
             'wrap': True
         },
         {
@@ -549,7 +549,7 @@ def generate_teams_card(data: Dict[str, Any]):
         },
         {
             'type': 'TextBlock',
-            'text': "\n\n\n\n"
+            'text': "\n\n"
         },
         {
             'type': 'ColumnSet',
