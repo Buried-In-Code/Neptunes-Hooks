@@ -47,6 +47,8 @@ def thread_func(poll_rate: int):
             save_config()
         else:
             LOGGER.info("No need to update Teams yet")
+        if np_response['game_over'] != 0:
+            break
         time.sleep(poll_rate * 60)
 
 
