@@ -42,12 +42,7 @@ def thread_func(poll_rate: int, testing: bool):
         )
         LOGGER.debug(f"Neptune's Response: {np_response}")
         if np_response:
-            if np_response['tick'] > CONFIG['Last Tick'] or testing:
-                generate_players_card(np_response)
-                generate_teams_card(np_response)
-                CONFIG['Last Tick'] = np_response['tick']
-                save_config()
-            else:
+            if np_response['tick'] <= 0:
                 new_players = []
                 np_players = [player['alias'] for player in np_response['players'].values() if player['alias']]
                 for new_player in np_players:
@@ -57,8 +52,13 @@ def thread_func(poll_rate: int, testing: bool):
                         new_players.append(new_player)
                 if new_players:
                     generate_new_players_card(new_players)
-                else:
-                    LOGGER.info("No need to update Teams yet")
+            elif np_response['tick'] > CONFIG['Last Tick'] or testing:
+                generate_players_card(np_response)
+                generate_teams_card(np_response)
+                CONFIG['Last Tick'] = np_response['tick']
+                save_config()
+            else:
+                LOGGER.info("No need to update Teams yet")
         else:
             break
         if np_response['game_over'] != 0 or testing:
