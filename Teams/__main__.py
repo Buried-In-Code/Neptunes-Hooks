@@ -48,12 +48,35 @@ def thread_func(poll_rate: int, testing: bool):
                 CONFIG['Last Tick'] = np_response['tick']
                 save_config()
             else:
-                LOGGER.info("No need to update Teams yet")
+                new_players = []
+                np_players = [player['alias'] for player in np_response['players'].values() if player['alias']]
+                for new_player in np_players:
+                    if new_player not in CONFIG['Players'].keys():
+                        CONFIG['Players'][new_player] = None
+                        save_config()
+                        new_players.append(new_player)
+                if new_players:
+                    generate_new_players_card(new_players)
+                else:
+                    LOGGER.info("No need to update Teams yet")
         else:
             break
         if np_response['game_over'] != 0 or testing:
             break
         time.sleep(poll_rate * 60)
+
+
+def generate_new_players_card(players: List[str]):
+    teams_request([
+        {
+            'type': 'TextBlock',
+            'text': 'The following players have now joined the game:'
+        },
+        {
+            'type': 'TextBlock',
+            'text': '\n\n'.join(players)
+        }
+    ])
 
 
 def generate_players_card(data: Dict[str, Any]):
