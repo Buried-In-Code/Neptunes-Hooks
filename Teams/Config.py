@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 import yaml
 
@@ -23,47 +23,46 @@ def load_config(testing: bool = False):
     if get_config_file(testing).exists():
         with open(get_config_file(testing), 'r', encoding='UTF-8') as yaml_file:
             data = yaml.safe_load(yaml_file) or {
-                'Teams Webhook': '',
-                'Game Number': -1,
-                'API Code': '',
-                'Tick Rate': 8,
-                'Last Tick': -1,
-                'Players': {
-                    'Alias 1': 'Name 1'
+                'Neptune\'s Pride': {
+                    'Number': -1,
+                    'Code': None,
+                    'Tick Rate': 8,
+                    'Last Tick': -1
                 },
-                'Teams': {
-                    'Team 1': [
-                        'Alias 1'
-                    ]
-                }
+                'Teams Webhook': None,
+                'Players': [
+                    {
+                        'Alias': 'Alias 1',
+                        'Name': 'Name 1',
+                        'Team': 'Team 1'
+                    }
+                ]
             }
     else:
         get_config_file(testing).touch()
         data = {
-            'Teams Webhook': '',
-            'Game Number': -1,
-            'API Code': '',
-            'Tick Rate': 8,
-            'Last Tick': -1,
-            'Players': {
-                'Alias 1': 'Name 1'
+            'Neptune\'s Pride': {
+                'Number': -1,
+                'Code': None,
+                'Tick Rate': 8,
+                'Last Tick': -1
             },
-            'Teams': {
-                'Team 1': [
-                    'Alias 1'
-                ]
-            }
+            'Teams Webhook': None,
+            'Players': [
+                {
+                    'Alias': 'Alias 1',
+                    'Name': 'Name 1',
+                    'Team': 'Team 1'
+                }
+            ]
         }
     save_config(data, testing)
     return data
 
 
-def lookup_player(username: str, testing: bool = False) -> Optional[str]:
-    return load_config(testing)['Players'].get(username, None)
-
-
-def lookup_team(username: str, testing: bool = False) -> Optional[str]:
-    for name, members in load_config(testing)['Teams'].items():
-        if username in members:
-            return name
-    return None
+def lookup_player(username: str, testing: bool = False) -> Dict[str, Any]:
+    LOGGER.debug(f"is Testing: {testing}")
+    for player in load_config(testing)['Players']:
+        if player['Alias'] == username:
+            return player
+    return {}

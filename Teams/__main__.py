@@ -9,7 +9,7 @@ from requests import post
 from requests.exceptions import ConnectionError, HTTPError
 
 from Logger import init_logger
-from Teams import load_config, save_config, lookup_player, lookup_team
+from Teams import load_config, save_config, lookup_player
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,8 +38,8 @@ def thread_func(poll_rate: int, testing: bool = False):
     while True:
         config = load_config(testing)
         np_response = request_data(
-            game_number=load_config(testing)['Game Number'],
-            code=load_config(testing)['API Code']
+            game_number=load_config(testing)['Neptune\'s Pride']['Number'],
+            code=load_config(testing)['Neptune\'s Pride']['Code']
         )
         LOGGER.debug(f"Neptune's Response: {np_response}")
         if np_response:
@@ -47,16 +47,20 @@ def thread_func(poll_rate: int, testing: bool = False):
                 new_players = []
                 np_players = [player['alias'] for player in np_response['players'].values() if player['alias']]
                 for new_player in np_players:
-                    if new_player not in config['Players'].keys():
-                        config['Players'][new_player] = None
+                    if not lookup_player(new_player, testing):
+                        config['Players'].append({
+                            'Alias': new_player,
+                            'Name': None,
+                            'Team': None
+                        })
                         save_config(config, testing)
                         new_players.append(new_player)
                 if new_players:
                     generate_new_players_card(new_players)
-            elif np_response['tick'] > config['Last Tick'] or testing:
+            elif np_response['tick'] > config['Neptune\'s Pride']['Last Tick'] or testing:
                 generate_players_card(np_response, config, testing)
                 generate_teams_card(np_response, config, testing)
-                config['Last Tick'] = np_response['tick']
+                config['Neptune\'s Pride']['Last Tick'] = np_response['tick']
                 save_config(config, testing)
             else:
                 LOGGER.info("No need to update Teams yet")
@@ -145,28 +149,31 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
     # endregion
     # region First card data
     for index, player in enumerate(sorted_players):
-        LOGGER.debug(f"{player['alias']} - {lookup_player(player['alias'])} - {lookup_team(player['alias'])} - "
+        LOGGER.debug(f"{player['alias']} - {lookup_player(player['alias'], testing).get('Name', '~')} - {lookup_player(player['alias'], testing).get('Team', '~')} - "
                      f"{player['total_stars']:,} - {player['total_strength']:,} - {player['total_fleets']:,}")
         alias_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'text': player['alias'] or '~',
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         name_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
-            'text': lookup_player(player['alias'] or '~') or '~',
+            'text': lookup_player(player['alias'], testing).get('Name', '~'),
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         team_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
-            'text': lookup_team(player['alias'] or '~') or '~',
+            'text': lookup_player(player['alias'], testing).get('Team', '~'),
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         stars_column.append({
             'type': 'TextBlock',
@@ -174,7 +181,8 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
             'horizontalAlignment': 'right',
             'text': f"{player['total_stars']:,}",
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         ships_column.append({
             'type': 'TextBlock',
@@ -182,7 +190,8 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
             'horizontalAlignment': 'right',
             'text': f"{player['total_strength']:,}",
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         fleets_column.append({
             'type': 'TextBlock',
@@ -190,7 +199,8 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
             'horizontalAlignment': 'right',
             'text': f"{player['total_fleets']:,}",
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
     # endregion
     first_card_columns = [
@@ -287,28 +297,31 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
     # endregion
     # region Second card data
     for index, player in enumerate(sorted_players):
-        LOGGER.debug(f"{player['alias']} - {lookup_player(player['alias'])} - {lookup_team(player['alias'])} - "
+        LOGGER.debug(f"{player['alias']} - {lookup_player(player['alias'], testing).get('Name', '~')} - {lookup_player(player['alias'], testing).get('Team', '~')} - "
                      f"{player['total_economy']:,} - {player['total_industry']:,} - {player['total_science']:,}")
         alias_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'text': player['alias'] or '~',
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         name_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
-            'text': lookup_player(player['alias'] or '~') or '~',
+            'text': lookup_player(player['alias'], testing).get('Name', '~'),
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         team_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
-            'text': lookup_team(player['alias'] or '~') or '~',
+            'text': lookup_player(player['alias'], testing).get('Team', '~'),
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         economy_column.append({
             'type': 'TextBlock',
@@ -316,7 +329,8 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
             'horizontalAlignment': 'right',
             'text': f"{player['total_economy']:,}",
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         industry_column.append({
             'type': 'TextBlock',
@@ -324,7 +338,8 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
             'horizontalAlignment': 'right',
             'text': f"{player['total_industry']:,}",
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
         science_column.append({
             'type': 'TextBlock',
@@ -332,7 +347,8 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
             'horizontalAlignment': 'right',
             'text': f"{player['total_science']:,}",
             'fontType': 'monospace',
-            'size': 'small'
+            'size': 'small',
+            'isSubtle': player['conceded'] == 0
         })
     # endregion
     second_card_columns = [
@@ -367,6 +383,7 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
             'width': 'auto'
         }
     ]
+    tick_rate = config['Neptune\'s Pride']['Tick Rate']
     post_stats([
         {
             'type': 'TextBlock',
@@ -376,7 +393,7 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
         },
         {
             'type': 'TextBlock',
-            'text': f"Hello Players,\n\nWelcome to Turn {int(data['tick'] / config['Tick Rate'])}, here are the Players stats:",
+            'text': f"Hello Players,\n\nWelcome to Turn {int(data['tick'] / tick_rate)}, here are the Players stats:",
             'wrap': True
         },
         {
@@ -397,57 +414,35 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
 
 def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
     # region Calculate Team Stats
-    team_data = []
-    no_team = {
-        'Name': '~',
-        'Stars': 0,
-        'Ships': 0,
-        'Fleets': 0,
-        'Economy': 0,
-        'Industry': 0,
-        'Science': 0,
-        'Active': False
-    }
-    for name, members in config['Teams'].items():
-        temp = {
-            'Name': name,
-            'Stars': 0,
-            'Ships': 0,
-            'Fleets': 0,
-            'Economy': 0,
-            'Industry': 0,
-            'Science': 0,
-            'Active': False
-        }
-        for member in members:
-            player = next(iter([it for it in data['players'].values() if it['alias'] == member]), None)
-            if player:
-                temp['Stars'] += player['total_stars']
-                temp['Ships'] += player['total_strength']
-                temp['Fleets'] += player['total_fleets']
-                temp['Economy'] += player['total_economy']
-                temp['Industry'] += player['total_industry']
-                temp['Science'] += player['total_science']
-                temp['Active'] = temp['Active'] or player['conceded'] == 0
-        team_data.append(temp)
-    teamless_count = 0
-    for player in data['players'].values():
-        if not lookup_team(player['alias']):
-            no_team['Stars'] += player['total_stars']
-            no_team['Ships'] += player['total_strength']
-            no_team['Fleets'] += player['total_fleets']
-            no_team['Economy'] += player['total_economy']
-            no_team['Industry'] += player['total_industry']
-            no_team['Science'] += player['total_science']
-            no_team['Active'] = no_team['Active'] or player['conceded'] == 0
-            teamless_count += 1
-    if teamless_count > 0:
-        team_data.append(no_team)
-    if teamless_count >= len(data['players'].values()):
+    team_data = {}
+    for player in config['Players']:
+        player_data = next(iter([it for it in data['players'].values() if it['alias'] == player['Alias']]), None)
+        if not data:
+            continue
+        if (player['Team'] or '~') in team_data:
+            team_data[player['Team']]['Stars'] += player_data['total_stars']
+            team_data[player['Team']]['Ships'] += player_data['total_strength']
+            team_data[player['Team']]['Fleets'] += player_data['total_fleets']
+            team_data[player['Team']]['Economy'] += player_data['total_economy']
+            team_data[player['Team']]['Industry'] += player_data['total_industry']
+            team_data[player['Team']]['Science'] += player_data['total_science']
+            team_data[player['Team']]['Active'] = team_data[player['Team']]['Active'] or player_data['conceded'] == 0
+        else:
+            team_data[player['Team']] = {
+                'Name': player['Team'] or '~',
+                'Stars': player_data['total_stars'],
+                'Ships': player_data['total_strength'],
+                'Fleets': player_data['total_fleets'],
+                'Economy': player_data['total_economy'],
+                'Industry': player_data['total_industry'],
+                'Science': player_data['total_science'],
+                'Active': player_data['conceded'] == 0
+            }
+    if len([team for team in team_data.values() if team['Name'] != '~']) <= 0:
         return
     # endregion
 
-    sorted_teams = sorted(team_data,
+    sorted_teams = sorted(team_data.values(),
                           key=lambda x: (x['Stars'], x['Ships'], x['Fleets'], x['Name']),
                           reverse=True)[:12]
     # region First card title
@@ -456,7 +451,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Name',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     stars_column = [
@@ -464,7 +460,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Stars',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     ships_column = [
@@ -472,7 +469,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Ships',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     fleets_column = [
@@ -480,7 +478,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Fleets',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     # endregion
@@ -491,28 +490,36 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             "separator": index == 0,
             'text': team['Name'] or '~',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
         stars_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'horizontalAlignment': 'right',
             'text': f"{team['Stars']:,}",
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
         ships_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'horizontalAlignment': 'right',
             'text': f"{team['Ships']:,}",
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
         fleets_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'horizontalAlignment': 'right',
             'text': f"{team['Fleets']:,}",
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
     # endregion
     first_card_columns = [
@@ -538,7 +545,7 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
         }
     ]
 
-    sorted_teams = sorted(team_data,
+    sorted_teams = sorted(team_data.values(),
                           key=lambda x: (x['Economy'], x['Industry'], x['Science'], x['Name']),
                           reverse=True)[:12]
     # region Second card title
@@ -547,7 +554,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Name',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     economy_column = [
@@ -555,7 +563,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Economy',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     industry_column = [
@@ -563,7 +572,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Industry',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     science_column = [
@@ -571,7 +581,8 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             'text': 'Science',
             'weight': 'Bolder',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small'
         }
     ]
     # endregion
@@ -582,28 +593,36 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'type': 'TextBlock',
             "separator": index == 0,
             'text': team['Name'] or '~',
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
         economy_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'horizontalAlignment': 'right',
             'text': f"{team['Economy']:,}",
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
         industry_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'horizontalAlignment': 'right',
             'text': f"{team['Industry']:,}",
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
         science_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
             'horizontalAlignment': 'right',
             'text': f"{team['Science']:,}",
-            'fontType': 'monospace'
+            'fontType': 'monospace',
+            'size': 'small',
+            'isSubtle': team['Active']
         })
     # endregion
     second_card_columns = [
@@ -628,6 +647,7 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
             'width': 'auto'
         }
     ]
+    tick_rate = config['Neptune\'s Pride']['Tick Rate']
     post_stats([
         {
             'type': 'TextBlock',
@@ -637,7 +657,7 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
         },
         {
             'type': 'TextBlock',
-            'text': f"Hello Teams,\n\nWelcome to Turn {int(data['tick'] / config['Tick Rate'])}, here are the Teams stats:",
+            'text': f"Hello Teams,\n\nWelcome to Turn {int(data['tick'] / tick_rate)}, here are the Teams stats:",
             'wrap': True
         },
         {
