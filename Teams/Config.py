@@ -1,25 +1,28 @@
 import logging
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Dict, Any
 
 import yaml
 
-from Teams import TOP_DIR
-
+TOP_DIR = Path(__file__).resolve().parent.parent
 LOGGER = logging.getLogger(__name__)
-CONFIG_FILE = TOP_DIR.joinpath('config.yaml')
-CONFIG = {}
 
 
-def save_config():
-    with open(CONFIG_FILE, 'w', encoding='UTF-8') as yaml_file:
-        yaml.safe_dump(CONFIG, yaml_file)
+def get_config_file(testing: bool = False):
+    if testing:
+        return TOP_DIR.joinpath('config-test.yaml')
+    return TOP_DIR.joinpath('config.yaml')
 
 
-def load_config():
-    global CONFIG
-    if CONFIG_FILE.exists():
-        with open(CONFIG_FILE, 'r', encoding='UTF-8') as yaml_file:
-            CONFIG = yaml.safe_load(yaml_file) or {
+def save_config(data: Dict[str, Any], testing: bool = False):
+    with open(get_config_file(testing), 'w', encoding='UTF-8') as yaml_file:
+        yaml.safe_dump(data, yaml_file)
+
+
+def load_config(testing: bool = False):
+    if get_config_file(testing).exists():
+        with open(get_config_file(testing), 'r', encoding='UTF-8') as yaml_file:
+            data = yaml.safe_load(yaml_file) or {
                 'Teams Webhook': '',
                 'Game Number': -1,
                 'API Code': '',
@@ -35,8 +38,8 @@ def load_config():
                 }
             }
     else:
-        CONFIG_FILE.touch()
-        CONFIG = {
+        get_config_file(testing).touch()
+        data = {
             'Teams Webhook': '',
             'Game Number': -1,
             'API Code': '',
@@ -51,18 +54,16 @@ def load_config():
                 ]
             }
         }
-    save_config()
+    save_config(data, testing)
+    return data
 
 
-load_config()
+def lookup_player(username: str, testing: bool = False) -> Optional[str]:
+    return load_config(testing)['Players'].get(username, None)
 
 
-def lookup_player(username: str) -> Optional[str]:
-    return CONFIG['Players'].get(username, None)
-
-
-def lookup_team(username: str) -> Optional[str]:
-    for name, members in CONFIG['Teams'].items():
+def lookup_team(username: str, testing: bool = False) -> Optional[str]:
+    for name, members in load_config(testing)['Teams'].items():
         if username in members:
             return name
     return None
