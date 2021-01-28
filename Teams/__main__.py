@@ -43,21 +43,20 @@ def thread_func(poll_rate: int, testing: bool = False):
         )
         LOGGER.debug(f"Neptune's Response: {np_response}")
         if np_response:
-            if np_response['tick'] <= 0:
-                new_players = []
-                np_players = [player['alias'] for player in np_response['players'].values() if player['alias']]
-                for new_player in np_players:
-                    if not lookup_player(new_player, testing):
-                        config['Players'].append({
-                            'Alias': new_player,
-                            'Name': None,
-                            'Team': None
-                        })
-                        save_config(config, testing)
-                        new_players.append(new_player)
-                if new_players:
-                    generate_new_players_card(new_players)
-            elif np_response['tick'] > config['Neptune\'s Pride']['Last Tick'] or testing:
+            new_players = []
+            np_players = [player['alias'] for player in np_response['players'].values() if player['alias']]
+            for new_player in np_players:
+                if not lookup_player(new_player, testing):
+                    config['Players'].append({
+                        'Alias': new_player,
+                        'Name': None,
+                        'Team': None
+                    })
+                    save_config(config, testing)
+                    new_players.append(new_player)
+            if new_players:
+                generate_new_players_card(new_players)
+            if np_response['tick'] > config['Neptune\'s Pride']['Last Tick'] or testing:
                 generate_players_card(np_response, config, testing)
                 generate_teams_card(np_response, config, testing)
                 config['Neptune\'s Pride']['Last Tick'] = np_response['tick']
@@ -417,7 +416,7 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
     team_data = {}
     for player in config['Players']:
         player_data = next(iter([it for it in data['players'].values() if it['alias'] == player['Alias']]), None)
-        if not data:
+        if not player_data:
             continue
         if (player['Team'] or '~') in team_data:
             team_data[player['Team']]['Stars'] += player_data['total_stars']
