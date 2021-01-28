@@ -236,7 +236,7 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
     ]
 
     sorted_players = sorted(data['players'].values(),
-                            key=lambda x: (x['total_economy'], x['total_industry'], x['total_science'], x['alias']),
+                            key=lambda x: (x['total_economy'] + x['total_industry'] + x['total_science'], x['alias']),
                             reverse=True)[:12]
     # region Second card title
     alias_column = [
@@ -297,7 +297,7 @@ def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing:
     # region Second card data
     for index, player in enumerate(sorted_players):
         LOGGER.debug(f"{player['alias']} - {lookup_player(player['alias'], testing).get('Name', '~')} - {lookup_player(player['alias'], testing).get('Team', '~')} - "
-                     f"{player['total_economy']:,} - {player['total_industry']:,} - {player['total_science']:,}")
+                     f"{player['total_economy'] + player['total_industry'] + player['total_science']} - {player['total_economy']:,} - {player['total_industry']:,} - {player['total_science']:,}")
         alias_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
@@ -545,7 +545,7 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
     ]
 
     sorted_teams = sorted(team_data.values(),
-                          key=lambda x: (x['Economy'], x['Industry'], x['Science'], x['Name']),
+                          key=lambda x: (x['Economy'] + x['Industry'] + x['Science'], x['Name']),
                           reverse=True)[:12]
     # region Second card title
     name_column = [
@@ -587,7 +587,7 @@ def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: b
     # endregion
     # region Second card data
     for index, team in enumerate(sorted_teams):
-        LOGGER.debug(f"{team['Name']} - {team['Economy']:,} - {team['Industry']:,} - {team['Science']:,}")
+        LOGGER.debug(f"{team['Name']} - {team['Economy'] + team['Industry'] + team['Science']} - {team['Economy']:,} - {team['Industry']:,} - {team['Science']:,}")
         name_column.append({
             'type': 'TextBlock',
             "separator": index == 0,
