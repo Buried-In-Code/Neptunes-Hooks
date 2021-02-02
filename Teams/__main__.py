@@ -57,8 +57,9 @@ def thread_func(poll_rate: int, testing: bool = False):
             if new_players:
                 generate_new_players_card(new_players)
             if np_response['tick'] > config['Neptune\'s Pride']['Last Tick'] or testing:
-                generate_players_card(np_response, config, testing)
-                generate_teams_card(np_response, config, testing)
+                generate_top_players(np_response, config, testing)
+                # generate_players_card(np_response, config, testing)
+                # generate_teams_card(np_response, config, testing)
                 config['Neptune\'s Pride']['Last Tick'] = np_response['tick']
                 save_config(config, testing)
             else:
@@ -83,6 +84,131 @@ def generate_new_players_card(players: List[str]):
             'fontType': 'monospace'
         }
     ])
+
+def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
+    show_teams = True
+    # region Generate teams
+    team_data = {}
+    for player in config['Players']:
+        player_data = next(iter([it for it in data['players'].values() if it['alias'] == player['Alias']]), None)
+        if not player_data:
+            continue
+        if (player['Team'] or '~') in team_data:
+            team_data[player['Team']]['Stars'] += player_data['total_stars']
+            team_data[player['Team']]['Ships'] += player_data['total_strength']
+            team_data[player['Team']]['Fleets'] += player_data['total_fleets']
+            team_data[player['Team']]['Economy'] += player_data['total_economy']
+            team_data[player['Team']]['Industry'] += player_data['total_industry']
+            team_data[player['Team']]['Science'] += player_data['total_science']
+            team_data[player['Team']]['Scanning'] = max(player_data['tech']['scanning']['level'], team_data[player['Team']]['Scanning'])
+            team_data[player['Team']]['Hyperspace Range'] = max(player_data['tech']['propulsion']['level'], team_data[player['Team']]['Hyperspace Range'])
+            team_data[player['Team']]['Terraforming'] = max(player_data['tech']['terraforming']['level'], team_data[player['Team']]['Terraforming'])
+            team_data[player['Team']]['Experimentation'] = max(player_data['tech']['research']['level'], team_data[player['Team']]['Experimentation'])
+            team_data[player['Team']]['Weapons'] = max(player_data['tech']['weapons']['level'], team_data[player['Team']]['Weapons'])
+            team_data[player['Team']]['Banking'] = max(player_data['tech']['banking']['level'], team_data[player['Team']]['Banking'])
+            team_data[player['Team']]['Manufacturing'] = max(player_data['tech']['manufacturing']['level'], team_data[player['Team']]['Manufacturing'])
+            team_data[player['Team']]['Active'] = team_data[player['Team']]['Active'] or player_data['conceded'] == 0
+        else:
+            team_data[player['Team']] = {
+                'Name': player['Team'] or '~',
+                'Stars': player_data['total_stars'],
+                'Ships': player_data['total_strength'],
+                'Fleets': player_data['total_fleets'],
+                'Economy': player_data['total_economy'],
+                'Industry': player_data['total_industry'],
+                'Science': player_data['total_science'],
+                'Scanning': player_data['tech']['scanning']['level'],
+                'Hyperspace Range': player_data['tech']['propulsion']['level'],
+                'Terraforming': player_data['tech']['terraforming']['level'],
+                'Experimentation': player_data['tech']['research']['level'],
+                'Weapons': player_data['tech']['weapons']['level'],
+                'Banking': player_data['tech']['banking']['level'],
+                'Manufacturing': player_data['tech']['manufacturing']['level'],
+                'Active': player_data['conceded'] == 0
+            }
+    if len([team for team in team_data.values() if team['Name'] != '~']) <= 0:
+        show_teams = False
+    # endregion
+
+    # region Teams FactSet
+    if show_teams:
+        team_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+        team_facts = []
+        for field in team_fields:
+            max_value = -1
+            max_teams = []
+            for team in team_data.values():
+                if team[field] > max_value:
+                    max_value = team[field]
+                    max_teams = [team]
+                elif team[field] == max_value:
+                    max_teams.append(team)
+            LOGGER.debug(', '.join([f"{x['Name']} ({x[field]:,})" for x in max_teams]))
+            team_facts.append({
+                'title': field,
+                'value': ', '.join([f"{x['Name']} ({x[field]:,})" for x in max_teams]),
+                'fontType': 'monospace'
+            })
+    # endregion
+
+    # region Player FactSet
+    title_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+    player_fields = ['total_stars', 'total_strength', 'total_economy', 'total_industry', 'total_science', 'scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing']
+    player_facts = []
+    for index, field in enumerate(player_fields):
+        max_value = -1
+        max_players = []
+        for player in data['players'].values():
+            value = player[field] if field not in ['scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing'] else player['tech'][field]['level']
+            if value > max_value:
+                max_value = value
+                max_players = [player]
+            elif value == max_value:
+                max_players.append(player)
+        values = []
+        for player in max_players:
+            value = player[field] if field not in ['scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing'] else player['tech'][field]['level']
+            values.append(f"{lookup_player(player['alias'], testing).get('Name', '~')} [{player['alias']}] ({value:,})")
+        LOGGER.debug(', '.join(values))
+        player_facts.append({
+            'title': title_fields[index],
+            'value': ', '.join(values),
+            'fontType': 'monospace'
+        })
+    # endregion
+
+    tick_rate = config['Neptune\'s Pride']['Tick Rate']
+    items = [{
+        'type': 'TextBlock',
+        'text': f"Hello Players {'and Teams ' if show_teams else ''}, Welcome to {data['name']}'s turn {int(data['tick'] / tick_rate)}\n\nI've crunched the numbers and here are the top Players {'and Teams ' if show_teams else ''} for each stat.",
+        'wrap': True,
+        'fontType': 'monospace'
+    }]
+    if show_teams:
+        items.append({
+            'type': 'TextBlock',
+            'text': 'Top Teams',
+            'wrap': True,
+            'fontType': 'monospace'
+        })
+        items.append({
+            'type': 'FactSet',
+            'facts': team_facts
+        })
+    items.append({
+            'type': 'TextBlock',
+            'text': 'Top Players',
+            'wrap': True,
+            'fontType': 'monospace'
+        })
+    items.append({
+        'type': 'FactSet',
+        'facts': player_facts
+    })
+
+
+    post_stats(items, testing)
+    
 
 
 def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
