@@ -56,7 +56,7 @@ def thread_func(poll_rate: int, testing: bool = False):
                     save_config(config, testing)
                     new_players.append(new_player)
             if new_players:
-                generate_new_players_card(new_players)
+                generate_new_players_card(new_players, testing)
             # endregion
             if np_response['tick'] > config['Neptune\'s Pride']['Last Tick'] or testing:
                 generate_top_players(np_response, config, testing)
@@ -74,19 +74,17 @@ def thread_func(poll_rate: int, testing: bool = False):
         time.sleep(poll_rate * 60)
 
 
-def generate_new_players_card(players: List[str]):
-    post_stats([
-        {
-            'type': 'TextBlock',
-            'text': 'The following players have now joined the game:',
-            'fontType': 'monospace'
-        },
-        {
-            'type': 'TextBlock',
-            'text': '\n\n'.join(players),
-            'fontType': 'monospace'
-        }
-    ])
+def generate_new_players_card(players: List[str], testing: bool = False):
+    post_stats({
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        'title': 'Welcome New Players',
+        'sections': [{
+            'activityTitle': 'The following players have now joined the game:'
+        }, {
+            'text': '\n\n - '.join(sorted(players))
+        }]
+    }, testing)
 
 
 def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
@@ -135,8 +133,8 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
             max_count = count
         elif count == max_count:
             leading.append(player)
-    LOGGER.debug(f"Leader: {leading}")\
-    # endregion
+    LOGGER.debug(f"Leader: {leading}") \
+        # endregion
 
     # region Output
     tick_rate = config['Neptune\'s Pride']['Tick Rate']
@@ -265,7 +263,7 @@ def generate_top_teams(data: Dict[str, Any], config: Dict[str, Any], testing: bo
             'value': ', '.join(sorted(value))
         } for key, value in team_facts.items()]
     }, {
-        'text': f"Looking at the above table it appears everyone should keep a close eye on **{' and '.join(leading)}** as they seem to be all over the leaderboard"
+        'text': f"Looking at the above table it appears everyone should keep a close eye on **{' and '.join(leading)}** as they seem to be all over this leaderboard"
     }]
 
     post_stats({
