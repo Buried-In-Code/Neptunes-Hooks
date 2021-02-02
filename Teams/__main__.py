@@ -56,10 +56,11 @@ def thread_func(poll_rate: int, testing: bool = False):
                     save_config(config, testing)
                     new_players.append(new_player)
             if new_players:
-                generate_new_players_card(new_players)
+                generate_new_players_card(new_players, testing)
             # endregion
             if np_response['tick'] > config['Neptune\'s Pride']['Last Tick'] or testing:
                 generate_top_players(np_response, config, testing)
+                generate_top_teams(np_response, config, testing)
                 # generate_players_card(np_response, config, testing)
                 # generate_teams_card(np_response, config, testing)
                 config['Neptune\'s Pride']['Last Tick'] = np_response['tick']
@@ -73,23 +74,92 @@ def thread_func(poll_rate: int, testing: bool = False):
         time.sleep(poll_rate * 60)
 
 
-def generate_new_players_card(players: List[str]):
-    post_stats([
-        {
-            'type': 'TextBlock',
-            'text': 'The following players have now joined the game:',
-            'fontType': 'monospace'
-        },
-        {
-            'type': 'TextBlock',
-            'text': '\n\n'.join(players),
-            'fontType': 'monospace'
-        }
-    ])
+def generate_new_players_card(players: List[str], testing: bool = False):
+    post_stats({
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        'title': 'Welcome New Players',
+        'sections': [{
+            'activityTitle': 'The following players have now joined the game:'
+        }, {
+            'text': '\n\n - '.join(sorted(players))
+        }]
+    }, testing)
 
 
 def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
-    show_teams = True
+    # region Player Stats
+    title_fields = ['Stars', 'Ships', 'Economy', '$/Turn', 'Industry', 'Ships/Turn', 'Science', 'Scanning',
+                    'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+    player_fields = ['total_stars', 'total_strength', 'total_economy', '$/Turn', 'total_industry', 'Ships/Turn',
+                     'total_science', 'scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking',
+                     'manufacturing']
+    player_facts = {}
+    for index, field in enumerate(player_fields):
+        max_value = -1
+        max_players = []
+        for player in data['players'].values():
+            if '/Turn' in field:
+                value = player['total_economy'] * 10.0 + player['tech']['banking']['level'] * 75.0 \
+                    if field.startswith('$') else \
+                    player['total_industry'] * (player['tech']['manufacturing']['level'] + 5.0) / 2.0
+            else:
+                value = player[field] if field.startswith("total_") else player['tech'][field]['level']
+            if value > max_value:
+                max_value = value
+                max_players = [player]
+            elif value == max_value:
+                max_players.append(player)
+        title = f"{title_fields[index]} ({max_value:,})" if field.startswith('total') or '/Turn' in field else \
+            f"{title_fields[index]} (Lvl {max_value:,})"
+        player_facts[title] = [f"{x['alias']} [{lookup_player(x['alias'], testing).get('Name', None) or '~'}]"
+                               for x in max_players]
+    # endregion
+
+    # region Top Player/s
+    player_count = {}
+    for key, value in player_facts.items():
+        for player in value:
+            if player in player_count:
+                player_count[player] += 1
+            else:
+                player_count[player] = 1
+    LOGGER.debug(f"Leading Count: {player_count}")
+    leading = []
+    max_count = -1
+    for player, count in player_count.items():
+        if count > max_count:
+            leading = [player]
+            max_count = count
+        elif count == max_count:
+            leading.append(player)
+    LOGGER.debug(f"Leader: {leading}") \
+        # endregion
+
+    # region Output
+    tick_rate = config['Neptune\'s Pride']['Tick Rate']
+    sections = [{
+        'activityTitle': f"Welcome to turn {int(data['tick'] / tick_rate)}",
+        'activitySubtitle': 'I\'ve crunched the numbers and here are the top Players for each stat.'
+    }, {
+        'facts': [{
+            'name': key,
+            'value': ', '.join(sorted(value))
+        } for key, value in player_facts.items()]
+    }, {
+        'text': f"Looking at the above table it appears everyone should keep a close eye on **{' and '.join(leading)}** as they seem to be all over this leaderboard"
+    }]
+
+    post_stats({
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        'title': f"{data['name']} - Player Stats",
+        'sections': sections
+    }, testing)
+    # endregion
+
+
+def generate_top_teams(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
     # region Generate teams
     team_data = {}
     for player in config['Players']:
@@ -137,130 +207,72 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
                 'Active': player_data['conceded'] == 0
             }
     if len([team for team in team_data.values() if team['Name'] != '~']) <= 0:
-        show_teams = False
+        return
     # endregion
 
     # region Teams Stats
-    if show_teams:
-        team_fields = ['Stars', 'Ships', 'Economy', '$/Turn', 'Industry', 'Ships/Turn', 'Science', 'Scanning',
-                       'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
-        team_facts = {}
-        for index, field in enumerate(team_fields):
-            max_value = -1
-            max_teams = []
-            for team in team_data.values():
-                if '/Turn' in field:
-                    value = team['Economy'] * 10.0 + team['Banking'] * 75.0 if field.startswith('$') else \
-                        team['Industry'] * (team['Manufacturing'] + 5.0) / 2.0
-                else:
-                    value = team[field]
-                if value > max_value:
-                    max_value = value
-                    max_teams = [team]
-                elif value == max_value:
-                    max_teams.append(team)
-            title = f"{field} ({max_value:,})" if index < 7 else f"{field} (Lvl {max_value:,})"
-            team_facts[title] = ', '.join(sorted([x['Name'] for x in max_teams]))
-    # endregion
-
-    # region Player Stats
-    title_fields = ['Stars', 'Ships', 'Economy', '$/Turn', 'Industry', 'Ships/Turn', 'Science', 'Scanning',
-                    'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
-    player_fields = ['total_stars', 'total_strength', 'total_economy', '$/Turn', 'total_industry', 'Ships/Turn',
-                     'total_science', 'scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking',
-                     'manufacturing']
-    player_facts = {}
-    for index, field in enumerate(player_fields):
+    team_fields = ['Stars', 'Ships', 'Economy', '$/Turn', 'Industry', 'Ships/Turn', 'Science', 'Scanning',
+                   'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+    team_facts = {}
+    for index, field in enumerate(team_fields):
         max_value = -1
-        max_players = []
-        for player in data['players'].values():
+        max_teams = []
+        for team in team_data.values():
             if '/Turn' in field:
-                value = player['total_economy'] * 10.0 + player['tech']['banking']['level'] * 75.0 \
-                    if field.startswith('$') else \
-                    player['total_industry'] * (player['tech']['manufacturing']['level'] + 5.0) / 2.0
+                value = team['Economy'] * 10.0 + team['Banking'] * 75.0 if field.startswith('$') else \
+                    team['Industry'] * (team['Manufacturing'] + 5.0) / 2.0
             else:
-                value = player[field] if field.startswith("total_") else player['tech'][field]['level']
+                value = team[field]
             if value > max_value:
                 max_value = value
-                max_players = [player]
+                max_teams = [team]
             elif value == max_value:
-                max_players.append(player)
-        title = f"{title_fields[index]} ({max_value:,})" if field.startswith('total') or '/Turn' in field else \
-            f"{title_fields[index]} (Lvl {max_value:,})"
-        # player_facts[title] = ', '.join([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'} [{x['alias']}]"
-        #                                  for x in max_players])
-        player_facts[title] = ', '.join(sorted([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'}"
-                                                for x in max_players]))
-        # player_facts[title] = ', '.join([x['alias'] for x in max_players])
+                max_teams.append(team)
+        title = f"{field} ({max_value:,})" if index < 7 else f"{field} (Lvl {max_value:,})"
+        team_facts[title] = [x['Name'] for x in max_teams]
     # endregion
 
-    column_sets = [{
-        'type': 'ColumnSet',
-        'columns': [{
-            'type': 'Column',
-            'items': [{
-                'type': 'TextBlock',
-                'text': x,
-                'weight': 'Bolder',
-                'fontType': 'monospace',
-                'size': 'small',
-                'wrap': True
-            } for x in player_facts.keys()],
-            'width': 'auto'
-        }, {
-            'type': 'Column',
-            'items': [{
-                'type': 'TextBlock',
-                'text': x,
-                'fontType': 'monospace',
-                'size': 'small',
-                'wrap': True
-            } for x in player_facts.values()],
-            'width': 'stretch'
-        }]
-    }]
-    if show_teams:
-        column_sets.append({
-            'type': 'TextBlock',
-            'text': '\n\n'
-        })
-        column_sets.append({
-            'type': 'ColumnSet',
-            'columns': [{
-                'type': 'Column',
-                'items': [{
-                    'type': 'TextBlock',
-                    'text': x,
-                    'weight': 'Bolder',
-                    'fontType': 'monospace',
-                    'size': 'small',
-                    'wrap': True
-                } for x in team_facts.keys()],
-                'width': 'auto'
-            }, {
-                'type': 'Column',
-                'items': [{
-                    'type': 'TextBlock',
-                    'text': x,
-                    'fontType': 'monospace',
-                    'size': 'small',
-                    'wrap': True
-                } for x in team_facts.values()],
-                'width': 'stretch'
-            }]
-        })
+    # region Top Team/s
+    team_count = {}
+    for key, value in team_facts.items():
+        for player in value:
+            if player in team_count:
+                team_count[player] += 1
+            else:
+                team_count[player] = 1
+    LOGGER.debug(f"Leading Count: {team_count}")
+    leading = []
+    max_count = -1
+    for team, count in team_count.items():
+        if count > max_count:
+            leading = [team]
+            max_count = count
+        elif count == max_count:
+            leading.append(team)
+    LOGGER.debug(f"Leader: {leading}")
+    # endregion
 
+    # region Output
     tick_rate = config['Neptune\'s Pride']['Tick Rate']
-    post_stats([
-        {
-            'type': 'TextBlock',
-            'text': f"Hello Players{' and Teams' if show_teams else ''},\n\n"
-                    f"Welcome to turn {int(data['tick'] / tick_rate)}. "
-                    f"I've crunched the numbers and here are the top Players{' and Teams' if show_teams else ''} for each stat.",
-            'wrap': True
-        },
-        *column_sets
-    ], testing)
+    sections = [{
+        'activityTitle': f"Welcome to turn {int(data['tick'] / tick_rate)}",
+        'activitySubtitle': f"I've crunched the numbers and here are the top Teams for each stat."
+    }, {
+        'facts': [{
+            'name': key,
+            'value': ', '.join(sorted(value))
+        } for key, value in team_facts.items()]
+    }, {
+        'text': f"Looking at the above table it appears everyone should keep a close eye on **{' and '.join(leading)}** as they seem to be all over this leaderboard"
+    }]
+
+    post_stats({
+        '@type': 'MessageCard',
+        '@context': 'http://schema.org/extensions',
+        'title': f"{data['name']} - Team Stats",
+        'sections': sections
+    }, testing)
+    # endregion
 
 
 def request_data(game_number: int, code: str) -> Dict[str, Any]:
@@ -293,25 +305,17 @@ def request_data(game_number: int, code: str) -> Dict[str, Any]:
         return {}
 
 
-def post_stats(body: List[Dict[str, Any]], testing: bool = False):
+def post_stats(content: Dict[str, Any], testing: bool = False):
     try:
         response = post(url=load_config(testing)['Teams Webhook'], headers={
             'Content-Type': 'application/json; charset=UTF-8',
             'User-Agent': 'Neptune\'s Hooks'
         }, timeout=TIMEOUT, json={
             'type': 'message',
-            'attachments': [
-                {
-                    'contentType': 'application/vnd.microsoft.card.adaptive',
-                    'contentUrl': None,
-                    'content': {
-                        '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
-                        'type': 'AdaptiveCard',
-                        'version': '1.2',
-                        'body': body
-                    }
-                }
-            ]
+            'attachments': [{
+                'contentType': 'application/vnd.microsoft.teams.card.o365connector',
+                'content': content
+            }]
         })
         response.raise_for_status()
         LOGGER.info(f"{response.status_code}: POST - {response.url}")
