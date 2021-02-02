@@ -7,7 +7,7 @@ A simple app that sends Neptune's Pride Stats to a Teams Channel via webhook.
 
 ## Built Using
  - [Python: 3.9.1](https://www.python.org/)
- - [pip: 21.0](https://pypi.org/project/pip/)
+ - [pip: 21.0.1](https://pypi.org/project/pip/)
  - [requests: 2.25.1](https://pypi.org/project/requests/)
  - [PyYaml: 5.4.1](https://pypi.org/project/PyYaml/)
 
