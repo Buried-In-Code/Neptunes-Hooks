@@ -154,7 +154,7 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
                     max_teams = [team]
                 elif team[field] == max_value:
                     max_teams.append(team)
-            team_facts[f"{field} ({max_value:,})"] = ', '.join([x['Name'] for x in max_teams])
+            team_facts[f"{field} ({max_value:,})"] = ', '.join(sorted([x['Name'] for x in max_teams]))
     # endregion
 
     # region Player Stats
@@ -177,8 +177,8 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
             'total') else f"{title_fields[index]} (Lvl {max_value:,})"
         # player_facts[title] = ', '.join([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'} [{x['alias']}]"
         #                                  for x in max_players])
-        player_facts[title] = ', '.join([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'}"
-                                         for x in max_players])
+        player_facts[title] = ', '.join(sorted([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'}"
+                                         for x in max_players]))
         # player_facts[title] = ', '.join([x['alias'] for x in max_players])
     # endregion
 
