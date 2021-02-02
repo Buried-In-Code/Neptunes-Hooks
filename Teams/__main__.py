@@ -43,6 +43,7 @@ def thread_func(poll_rate: int, testing: bool = False):
         )
         LOGGER.debug(f"Neptune's Response: {np_response}")
         if np_response:
+            # region New Player Notification
             new_players = []
             np_players = [player['alias'] for player in np_response['players'].values() if player['alias']]
             for new_player in np_players:
@@ -56,6 +57,7 @@ def thread_func(poll_rate: int, testing: bool = False):
                     new_players.append(new_player)
             if new_players:
                 generate_new_players_card(new_players)
+            # endregion
             if np_response['tick'] > config['Neptune\'s Pride']['Last Tick'] or testing:
                 generate_top_players(np_response, config, testing)
                 # generate_players_card(np_response, config, testing)
@@ -85,6 +87,7 @@ def generate_new_players_card(players: List[str]):
         }
     ])
 
+
 def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
     show_teams = True
     # region Generate teams
@@ -100,13 +103,20 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
             team_data[player['Team']]['Economy'] += player_data['total_economy']
             team_data[player['Team']]['Industry'] += player_data['total_industry']
             team_data[player['Team']]['Science'] += player_data['total_science']
-            team_data[player['Team']]['Scanning'] = max(player_data['tech']['scanning']['level'], team_data[player['Team']]['Scanning'])
-            team_data[player['Team']]['Hyperspace Range'] = max(player_data['tech']['propulsion']['level'], team_data[player['Team']]['Hyperspace Range'])
-            team_data[player['Team']]['Terraforming'] = max(player_data['tech']['terraforming']['level'], team_data[player['Team']]['Terraforming'])
-            team_data[player['Team']]['Experimentation'] = max(player_data['tech']['research']['level'], team_data[player['Team']]['Experimentation'])
-            team_data[player['Team']]['Weapons'] = max(player_data['tech']['weapons']['level'], team_data[player['Team']]['Weapons'])
-            team_data[player['Team']]['Banking'] = max(player_data['tech']['banking']['level'], team_data[player['Team']]['Banking'])
-            team_data[player['Team']]['Manufacturing'] = max(player_data['tech']['manufacturing']['level'], team_data[player['Team']]['Manufacturing'])
+            team_data[player['Team']]['Scanning'] = max(player_data['tech']['scanning']['level'],
+                                                        team_data[player['Team']]['Scanning'])
+            team_data[player['Team']]['Hyperspace Range'] = max(player_data['tech']['propulsion']['level'],
+                                                                team_data[player['Team']]['Hyperspace Range'])
+            team_data[player['Team']]['Terraforming'] = max(player_data['tech']['terraforming']['level'],
+                                                            team_data[player['Team']]['Terraforming'])
+            team_data[player['Team']]['Experimentation'] = max(player_data['tech']['research']['level'],
+                                                               team_data[player['Team']]['Experimentation'])
+            team_data[player['Team']]['Weapons'] = max(player_data['tech']['weapons']['level'],
+                                                       team_data[player['Team']]['Weapons'])
+            team_data[player['Team']]['Banking'] = max(player_data['tech']['banking']['level'],
+                                                       team_data[player['Team']]['Banking'])
+            team_data[player['Team']]['Manufacturing'] = max(player_data['tech']['manufacturing']['level'],
+                                                             team_data[player['Team']]['Manufacturing'])
             team_data[player['Team']]['Active'] = team_data[player['Team']]['Active'] or player_data['conceded'] == 0
         else:
             team_data[player['Team']] = {
@@ -130,10 +140,11 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
         show_teams = False
     # endregion
 
-    # region Teams FactSet
+    # region Teams Stats
     if show_teams:
-        team_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
-        team_facts = []
+        team_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range',
+                       'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+        team_facts = {}
         for field in team_fields:
             max_value = -1
             max_teams = []
@@ -143,660 +154,100 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
                     max_teams = [team]
                 elif team[field] == max_value:
                     max_teams.append(team)
-            LOGGER.debug(', '.join([f"{x['Name']} ({x[field]:,})" for x in max_teams]))
-            team_facts.append({
-                'title': field,
-                'value': ', '.join([f"{x['Name']} ({x[field]:,})" for x in max_teams]),
-                'fontType': 'monospace'
-            })
+            team_facts[f"{field} ({max_value:,})"] = ', '.join([x['Name'] for x in max_teams])
     # endregion
 
-    # region Player FactSet
-    title_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
-    player_fields = ['total_stars', 'total_strength', 'total_economy', 'total_industry', 'total_science', 'scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing']
-    player_facts = []
+    # region Player Stats
+    title_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range', 'Terraforming',
+                    'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+    player_fields = ['total_stars', 'total_strength', 'total_economy', 'total_industry', 'total_science', 'scanning',
+                     'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing']
+    player_facts = {}
     for index, field in enumerate(player_fields):
         max_value = -1
         max_players = []
         for player in data['players'].values():
-            value = player[field] if field not in ['scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing'] else player['tech'][field]['level']
+            value = player[field] if field.startswith("total_") else player['tech'][field]['level']
             if value > max_value:
                 max_value = value
                 max_players = [player]
             elif value == max_value:
                 max_players.append(player)
-        values = []
-        for player in max_players:
-            value = player[field] if field not in ['scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing'] else player['tech'][field]['level']
-            values.append(f"{lookup_player(player['alias'], testing).get('Name', '~')} [{player['alias']}] ({value:,})")
-        LOGGER.debug(', '.join(values))
-        player_facts.append({
-            'title': title_fields[index],
-            'value': ', '.join(values),
-            'fontType': 'monospace'
-        })
+        title = f"{title_fields[index]} ({max_value:,})" if field.startswith(
+            'total') else f"{title_fields[index]} (Lvl {max_value:,})"
+        # player_facts[title] = ', '.join([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'} [{x['alias']}]"
+        #                                  for x in max_players])
+        player_facts[title] = ', '.join([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'}"
+                                         for x in max_players])
+        # player_facts[title] = ', '.join([x['alias'] for x in max_players])
     # endregion
 
-    tick_rate = config['Neptune\'s Pride']['Tick Rate']
-    items = [{
-        'type': 'TextBlock',
-        'text': f"Hello Players {'and Teams ' if show_teams else ''}, Welcome to {data['name']}'s turn {int(data['tick'] / tick_rate)}\n\nI've crunched the numbers and here are the top Players {'and Teams ' if show_teams else ''} for each stat.",
-        'wrap': True,
-        'fontType': 'monospace'
+    column_sets = [{
+        'type': 'ColumnSet',
+        'columns': [{
+            'type': 'Column',
+            'items': [{
+                'type': 'TextBlock',
+                'text': x,
+                'weight': 'Bolder',
+                'fontType': 'monospace',
+                'size': 'small',
+                'wrap': True
+            } for x in player_facts.keys()],
+            'width': 'auto'
+        }, {
+            'type': 'Column',
+            'items': [{
+                'type': 'TextBlock',
+                'text': x,
+                'fontType': 'monospace',
+                'size': 'small',
+                'wrap': True
+            } for x in player_facts.values()],
+            'width': 'stretch'
+        }]
     }]
     if show_teams:
-        items.append({
+        column_sets.append({
             'type': 'TextBlock',
-            'text': 'Top Teams',
-            'wrap': True,
-            'fontType': 'monospace'
+            'text': '\n\n'
         })
-        items.append({
-            'type': 'FactSet',
-            'facts': team_facts
+        column_sets.append({
+            'type': 'ColumnSet',
+            'columns': [{
+                'type': 'Column',
+                'items': [{
+                    'type': 'TextBlock',
+                    'text': x,
+                    'weight': 'Bolder',
+                    'fontType': 'monospace',
+                    'size': 'small',
+                    'wrap': True
+                } for x in team_facts.keys()],
+                'width': 'auto'
+            }, {
+                'type': 'Column',
+                'items': [{
+                    'type': 'TextBlock',
+                    'text': x,
+                    'fontType': 'monospace',
+                    'size': 'small',
+                    'wrap': True
+                } for x in team_facts.values()],
+                'width': 'stretch'
+            }]
         })
-    items.append({
-            'type': 'TextBlock',
-            'text': 'Top Players',
-            'wrap': True,
-            'fontType': 'monospace'
-        })
-    items.append({
-        'type': 'FactSet',
-        'facts': player_facts
-    })
 
-
-    post_stats(items, testing)
-    
-
-
-def generate_players_card(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
-    sorted_players = sorted(data['players'].values(),
-                            key=lambda x: (x['total_stars'], x['total_strength'], x['total_fleets'], x['alias']),
-                            reverse=True)[:12]
-
-    # region First card title
-    alias_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Alias',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    name_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Name',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    team_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Team',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    stars_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Stars',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    ships_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Ships',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    fleets_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Fleets',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    # endregion
-    # region First card data
-    for index, player in enumerate(sorted_players):
-        LOGGER.debug(f"{player['alias']} - {lookup_player(player['alias'], testing).get('Name', '~')} - {lookup_player(player['alias'], testing).get('Team', '~')} - "
-                     f"{player['total_stars']:,} - {player['total_strength']:,} - {player['total_fleets']:,}")
-        alias_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': player['alias'] or '~',
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        name_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': lookup_player(player['alias'], testing).get('Name', '~'),
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        team_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': lookup_player(player['alias'], testing).get('Team', '~'),
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        stars_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{player['total_stars']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        ships_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{player['total_strength']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        fleets_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{player['total_fleets']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-    # endregion
-    first_card_columns = [
-        {
-            'type': 'Column',
-            'items': alias_column,
-            'width': 'stretch'
-        },
-        {
-            'type': 'Column',
-            'items': name_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': team_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': stars_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': ships_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': fleets_column,
-            'width': 'auto'
-        }
-    ]
-
-    sorted_players = sorted(data['players'].values(),
-                            key=lambda x: (x['total_economy'], x['total_industry'], x['total_science'], x['alias']),
-                            reverse=True)[:12]
-    # region Second card title
-    alias_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Alias',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    name_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Name',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    team_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Team',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    economy_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Econ',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    industry_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Indu',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    science_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Scie',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    # endregion
-    # region Second card data
-    for index, player in enumerate(sorted_players):
-        LOGGER.debug(f"{player['alias']} - {lookup_player(player['alias'], testing).get('Name', '~')} - {lookup_player(player['alias'], testing).get('Team', '~')} - "
-                     f"{player['total_economy']:,} - {player['total_industry']:,} - {player['total_science']:,}")
-        alias_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': player['alias'] or '~',
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        name_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': lookup_player(player['alias'], testing).get('Name', '~'),
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        team_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': lookup_player(player['alias'], testing).get('Team', '~'),
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        economy_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{player['total_economy']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        industry_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{player['total_industry']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-        science_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{player['total_science']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': player['conceded'] == 0
-        })
-    # endregion
-    second_card_columns = [
-        {
-            'type': 'Column',
-            'items': alias_column,
-            'width': 'stretch'
-        },
-        {
-            'type': 'Column',
-            'items': name_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': team_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': economy_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': industry_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': science_column,
-            'width': 'auto'
-        }
-    ]
     tick_rate = config['Neptune\'s Pride']['Tick Rate']
     post_stats([
         {
             'type': 'TextBlock',
-            'size': 'Large',
-            'weight': 'Bolder',
-            'text': f"{data['name']} - Player Stats"
-        },
-        {
-            'type': 'TextBlock',
-            'text': f"Hello Players,\n\nWelcome to Turn {int(data['tick'] / tick_rate)}, here are the Players stats:",
+            'text': f"Hello Players{' and Teams' if show_teams else ''},\n\n"
+                    f"Welcome to turn {int(data['tick'] / tick_rate)}. "
+                    f"I've crunched the numbers and here are the top Players{' and Teams' if show_teams else ''} for each stat.",
             'wrap': True
         },
-        {
-            'type': 'ColumnSet',
-            'columns': first_card_columns
-        },
-        {
-            'type': 'TextBlock',
-            'text': '\n\n',
-            'wrap': True
-        },
-        {
-            'type': 'ColumnSet',
-            'columns': second_card_columns
-        }
-    ], testing)
-
-
-def generate_teams_card(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
-    # region Calculate Team Stats
-    team_data = {}
-    for player in config['Players']:
-        player_data = next(iter([it for it in data['players'].values() if it['alias'] == player['Alias']]), None)
-        if not player_data:
-            continue
-        if (player['Team'] or '~') in team_data:
-            team_data[player['Team']]['Stars'] += player_data['total_stars']
-            team_data[player['Team']]['Ships'] += player_data['total_strength']
-            team_data[player['Team']]['Fleets'] += player_data['total_fleets']
-            team_data[player['Team']]['Economy'] += player_data['total_economy']
-            team_data[player['Team']]['Industry'] += player_data['total_industry']
-            team_data[player['Team']]['Science'] += player_data['total_science']
-            team_data[player['Team']]['Active'] = team_data[player['Team']]['Active'] or player_data['conceded'] == 0
-        else:
-            team_data[player['Team']] = {
-                'Name': player['Team'] or '~',
-                'Stars': player_data['total_stars'],
-                'Ships': player_data['total_strength'],
-                'Fleets': player_data['total_fleets'],
-                'Economy': player_data['total_economy'],
-                'Industry': player_data['total_industry'],
-                'Science': player_data['total_science'],
-                'Active': player_data['conceded'] == 0
-            }
-    if len([team for team in team_data.values() if team['Name'] != '~']) <= 0:
-        return
-    # endregion
-
-    sorted_teams = sorted(team_data.values(),
-                          key=lambda x: (x['Stars'], x['Ships'], x['Fleets'], x['Name']),
-                          reverse=True)[:12]
-    # region First card title
-    name_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Name',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    stars_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Stars',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    ships_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Ships',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    fleets_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Fleets',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    # endregion
-    # region First card data
-    for index, team in enumerate(sorted_teams):
-        LOGGER.debug(f"{team['Name']} - {team['Stars']:,} - {team['Ships']:,} - {team['Fleets']:,}")
-        name_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': team['Name'] or '~',
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-        stars_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{team['Stars']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-        ships_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{team['Ships']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-        fleets_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{team['Fleets']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-    # endregion
-    first_card_columns = [
-        {
-            'type': 'Column',
-            'items': name_column,
-            'width': 'stretch'
-        },
-        {
-            'type': 'Column',
-            'items': stars_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': ships_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': fleets_column,
-            'width': 'auto'
-        }
-    ]
-
-    sorted_teams = sorted(team_data.values(),
-                          key=lambda x: (x['Economy'], x['Industry'], x['Science'], x['Name']),
-                          reverse=True)[:12]
-    # region Second card title
-    name_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Name',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    economy_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Economy',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    industry_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Industry',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    science_column = [
-        {
-            'type': 'TextBlock',
-            'text': 'Science',
-            'weight': 'Bolder',
-            'fontType': 'monospace',
-            'size': 'small'
-        }
-    ]
-    # endregion
-    # region Second card data
-    for index, team in enumerate(sorted_teams):
-        LOGGER.debug(f"{team['Name']} - {team['Economy']:,} - {team['Industry']:,} - {team['Science']:,}")
-        name_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'text': team['Name'] or '~',
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-        economy_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{team['Economy']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-        industry_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{team['Industry']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-        science_column.append({
-            'type': 'TextBlock',
-            "separator": index == 0,
-            'horizontalAlignment': 'right',
-            'text': f"{team['Science']:,}",
-            'fontType': 'monospace',
-            'size': 'small',
-            'isSubtle': team['Active']
-        })
-    # endregion
-    second_card_columns = [
-        {
-            'type': 'Column',
-            'items': name_column,
-            'width': 'stretch'
-        },
-        {
-            'type': 'Column',
-            'items': economy_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': industry_column,
-            'width': 'auto'
-        },
-        {
-            'type': 'Column',
-            'items': science_column,
-            'width': 'auto'
-        }
-    ]
-    tick_rate = config['Neptune\'s Pride']['Tick Rate']
-    post_stats([
-        {
-            'type': 'TextBlock',
-            'size': 'Large',
-            'weight': 'Bolder',
-            'text': f"{data['name']} - Team Stats"
-        },
-        {
-            'type': 'TextBlock',
-            'text': f"Hello Teams,\n\nWelcome to Turn {int(data['tick'] / tick_rate)}, here are the Teams stats:",
-            'wrap': True
-        },
-        {
-            'type': 'ColumnSet',
-            'columns': first_card_columns
-        },
-        {
-            'type': 'TextBlock',
-            'text': "\n\n"
-        },
-        {
-            'type': 'ColumnSet',
-            'columns': second_card_columns
-        }
+        *column_sets
     ], testing)
 
 
