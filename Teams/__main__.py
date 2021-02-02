@@ -142,43 +142,55 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
 
     # region Teams Stats
     if show_teams:
-        team_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range',
-                       'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+        team_fields = ['Stars', 'Ships', 'Economy', '$/Turn', 'Industry', 'Ships/Turn', 'Science', 'Scanning',
+                       'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
         team_facts = {}
-        for field in team_fields:
+        for index, field in enumerate(team_fields):
             max_value = -1
             max_teams = []
             for team in team_data.values():
-                if team[field] > max_value:
-                    max_value = team[field]
+                if '/Turn' in field:
+                    value = team['Economy'] * 10.0 + team['Banking'] * 75.0 if field.startswith('$') else \
+                        team['Industry'] * (team['Manufacturing'] + 5.0) / 2.0
+                else:
+                    value = team[field]
+                if value > max_value:
+                    max_value = value
                     max_teams = [team]
-                elif team[field] == max_value:
+                elif value == max_value:
                     max_teams.append(team)
-            team_facts[f"{field} ({max_value:,})"] = ', '.join(sorted([x['Name'] for x in max_teams]))
+            title = f"{field} ({max_value:,})" if index < 7 else f"{field} (Lvl {max_value:,})"
+            team_facts[title] = ', '.join(sorted([x['Name'] for x in max_teams]))
     # endregion
 
     # region Player Stats
-    title_fields = ['Stars', 'Ships', 'Economy', 'Industry', 'Science', 'Scanning', 'Hyperspace Range', 'Terraforming',
-                    'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
-    player_fields = ['total_stars', 'total_strength', 'total_economy', 'total_industry', 'total_science', 'scanning',
-                     'propulsion', 'terraforming', 'research', 'weapons', 'banking', 'manufacturing']
+    title_fields = ['Stars', 'Ships', 'Economy', '$/Turn', 'Industry', 'Ships/Turn', 'Science', 'Scanning',
+                    'Hyperspace Range', 'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
+    player_fields = ['total_stars', 'total_strength', 'total_economy', '$/Turn', 'total_industry', 'Ships/Turn',
+                     'total_science', 'scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking',
+                     'manufacturing']
     player_facts = {}
     for index, field in enumerate(player_fields):
         max_value = -1
         max_players = []
         for player in data['players'].values():
-            value = player[field] if field.startswith("total_") else player['tech'][field]['level']
+            if '/Turn' in field:
+                value = player['total_economy'] * 10.0 + player['tech']['banking']['level'] * 75.0 \
+                    if field.startswith('$') else \
+                    player['total_industry'] * (player['tech']['manufacturing']['level'] + 5.0) / 2.0
+            else:
+                value = player[field] if field.startswith("total_") else player['tech'][field]['level']
             if value > max_value:
                 max_value = value
                 max_players = [player]
             elif value == max_value:
                 max_players.append(player)
-        title = f"{title_fields[index]} ({max_value:,})" if field.startswith(
-            'total') else f"{title_fields[index]} (Lvl {max_value:,})"
+        title = f"{title_fields[index]} ({max_value:,})" if field.startswith('total') or '/Turn' in field else \
+            f"{title_fields[index]} (Lvl {max_value:,})"
         # player_facts[title] = ', '.join([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'} [{x['alias']}]"
         #                                  for x in max_players])
         player_facts[title] = ', '.join(sorted([f"{lookup_player(x['alias'], testing).get('Name', None) or '~'}"
-                                         for x in max_players]))
+                                                for x in max_players]))
         # player_facts[title] = ', '.join([x['alias'] for x in max_players])
     # endregion
 
