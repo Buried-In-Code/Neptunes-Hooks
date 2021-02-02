@@ -118,6 +118,7 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
                                for x in max_players]
     # endregion
 
+    # region Top Player/s
     player_count = {}
     for key, value in player_facts.items():
         for player in value:
@@ -134,8 +135,10 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
             max_count = count
         elif count == max_count:
             leading.append(player)
-    LOGGER.debug(f"Leader: {leading}")
+    LOGGER.debug(f"Leader: {leading}")\
+    # endregion
 
+    # region Output
     tick_rate = config['Neptune\'s Pride']['Tick Rate']
     sections = [{
         'activityTitle': f"Welcome to turn {int(data['tick'] / tick_rate)}",
@@ -155,6 +158,7 @@ def generate_top_players(data: Dict[str, Any], config: Dict[str, Any], testing: 
         'title': f"{data['name']} - Player Stats",
         'sections': sections
     }, testing)
+    # endregion
 
 
 def generate_top_teams(data: Dict[str, Any], config: Dict[str, Any], testing: bool = False):
@@ -229,6 +233,8 @@ def generate_top_teams(data: Dict[str, Any], config: Dict[str, Any], testing: bo
         title = f"{field} ({max_value:,})" if index < 7 else f"{field} (Lvl {max_value:,})"
         team_facts[title] = [x['Name'] for x in max_teams]
     # endregion
+
+    # region Top Team/s
     team_count = {}
     for key, value in team_facts.items():
         for player in value:
@@ -246,7 +252,9 @@ def generate_top_teams(data: Dict[str, Any], config: Dict[str, Any], testing: bo
         elif count == max_count:
             leading.append(team)
     LOGGER.debug(f"Leader: {leading}")
+    # endregion
 
+    # region Output
     tick_rate = config['Neptune\'s Pride']['Tick Rate']
     sections = [{
         'activityTitle': f"Welcome to turn {int(data['tick'] / tick_rate)}",
@@ -266,6 +274,7 @@ def generate_top_teams(data: Dict[str, Any], config: Dict[str, Any], testing: bo
         'title': f"{data['name']} - Team Stats",
         'sections': sections
     }, testing)
+    # endregion
 
 
 def request_data(game_number: int, code: str) -> Dict[str, Any]:
