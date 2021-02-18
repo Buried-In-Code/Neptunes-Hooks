@@ -3,7 +3,9 @@
 [![Contributors](https://img.shields.io/github/contributors/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/graphs/contributors)
 [![License](https://img.shields.io/github/license/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-A simple app that sends Neptune's Pride Stats to a Teams Channel via webhook.
+A simple app that sends Neptune's Pride Stats to webhooks.  
+Currently, supports:
+ - Microsoft Teams
 
 ## Built Using
  - [Python: 3.9.1](https://www.python.org/)
@@ -21,7 +23,7 @@ A simple app that sends Neptune's Pride Stats to a Teams Channel via webhook.
     - Game Number
     - API Code
     - Tick Rate
-    - Player Usernames, Names and/or Teams 
+    - Player Usernames and/or Teams 
     - MS Teams Webhook
     - Discord Webhook
 3. Run the following:
@@ -35,7 +37,7 @@ A simple app that sends Neptune's Pride Stats to a Teams Channel via webhook.
 | Argument | Type | Default | Choices | Example | Description |
 | -------- | ---- | ------- | ------- | ------- | ----------- |
 | Poll Rate | int | 30 | | `python -m Teams 30` | Used to determine how long between polls to the Neptune's Pride API *(value in Minutes)* |
-| Hooks | [str] | None | teams, discord | `python -m Teams --hooks teams` | *TODO* |
+| Hooks | [str] | None | teams, discord | `python -m Teams --hooks teams` | Select which platform to send the updates to *(Requires a valid URL in the `config.yaml`)* |
 | Testing | bool | False | | `python -m Teams --testing` | Used to skip the tick check and use test config |
 
 ## Socials
