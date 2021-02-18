@@ -109,6 +109,8 @@ def __calculate_overall(data: Dict[str, List[str]]) -> List[str]:
 
 def request_data(config: Dict[str, Any]) -> Dict[str, Any]:
     data = __request_data(config['Neptune\'s Pride']['Number'], config['Neptune\'s Pride']['Code'])
+    if not data:
+        return {}
     fields = ['total_stars', 'total_strength', 'total_economy', '$/Turn', 'total_industry', 'Ships/Turn',
               'total_science', 'scanning', 'propulsion', 'terraforming', 'research', 'weapons', 'banking',
               'manufacturing']

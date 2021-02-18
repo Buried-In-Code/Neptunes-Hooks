@@ -64,9 +64,9 @@ def post_team_results(leaders: Dict[str, List[str]], overall: List[str], turn: i
 
 def post_stats(content: Dict[str, Any], config: Dict[str, Any]):
     try:
-        if not config['Hooks']['Teams']:
+        if not config['Webhooks']['Teams']:
             raise ConnectionError
-        response = post(url=config['Hooks']['Teams'], headers={
+        response = post(url=config['Webhooks']['Teams'], headers={
             'Content-Type': 'application/json; charset=UTF-8',
             'User-Agent': 'Neptune\'s Hooks'
         }, timeout=TIMEOUT, json={
@@ -81,4 +81,4 @@ def post_stats(content: Dict[str, Any], config: Dict[str, Any]):
     except HTTPError as err:
         LOGGER.error(err)
     except ConnectionError:
-        LOGGER.critical(f"Unable to access `{config['Hooks']['Teams']}`")
+        LOGGER.critical(f"Unable to access `{config['Webhooks']['Teams']}`")

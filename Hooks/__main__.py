@@ -47,7 +47,6 @@ def thread_func(poll_rate: int, hooks: List[str], testing: bool = False):
             for new_player in np_players:
                 if new_player not in config['Players'].keys():
                     config['Players'][new_player] = {
-                        'Name': None,
                         'Team': None
                     }
                     save_config(config, testing)

@@ -15,15 +15,12 @@ DEFAULT = {
     },
     'Players': {
         'Username 1': {
-            'Name': None,
             'Team': None
         },
         'Username 2': {
-            'Name': None,
             'Team': None
         },
         'Username 3': {
-            'Name': None,
             'Team': None
         }
     },
@@ -35,13 +32,13 @@ DEFAULT = {
 
 
 def save_config(data: Dict[str, Any], testing: bool = False):
-    config_file = TOP_DIR.joinpath('config-2-test.yaml' if testing else 'config-2.yaml')
+    config_file = TOP_DIR.joinpath('config-test.yaml' if testing else 'config.yaml')
     with open(config_file, 'w', encoding='UTF-8') as yaml_file:
         yaml.safe_dump(data, yaml_file)
 
 
 def load_config(testing: bool = False) -> Dict[str, Any]:
-    config_file = TOP_DIR.joinpath('config-2-test.yaml' if testing else 'config-2.yaml')
+    config_file = TOP_DIR.joinpath('config-test.yaml' if testing else 'config.yaml')
     if config_file.exists():
         with open(config_file, 'r', encoding='UTF-8') as yaml_file:
             data = yaml.safe_load(yaml_file) or DEFAULT
@@ -50,10 +47,6 @@ def load_config(testing: bool = False) -> Dict[str, Any]:
         data = DEFAULT
     save_config(data, testing)
     return data
-
-
-def get_name(username: str, config: Dict[str, Any]) -> Optional[str]:
-    return config['Players'].get(username, {}).get('Name', None)
 
 
 def get_team(username: str, config: Dict[str, Any]) -> Optional[str]:
