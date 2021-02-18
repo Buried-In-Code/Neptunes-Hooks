@@ -36,7 +36,7 @@ Currently, supports:
 
 | Argument | Type | Default | Choices | Example | Description |
 | -------- | ---- | ------- | ------- | ------- | ----------- |
-| Poll Rate | int | 30 | | `python -m Teams 30` | Used to determine how long between polls to the Neptune's Pride API *(value in Minutes)* |
+| Poll | int | 30 | | `python -m Teams 30` | Used to determine how long between polls to the Neptune's Pride API *(value in Minutes)* |
 | Hooks | [str] | None | teams, discord | `python -m Teams --hooks teams` | Select which platform to send the updates to *(Requires a valid URL in the `config.yaml`)* |
 | Testing | bool | False | | `python -m Teams --testing` | Used to skip the tick check and use test config |
 

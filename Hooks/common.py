@@ -135,7 +135,7 @@ def request_data(config: Dict[str, Any]) -> Dict[str, Any]:
     return {
         'Title': data['name'],
         'Tick': data['tick'],
-        'Active': data['game_over'] != 0,
+        'Active': data['game_over'] == 0,
         'Players': output
     }
 
