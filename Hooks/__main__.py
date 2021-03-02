@@ -1,7 +1,6 @@
 import logging
 import time
 from argparse import ArgumentParser, Namespace
-from typing import List
 
 from Hooks.common import parse_player_stats, parse_team_stats, request_data
 from Hooks.config import is_teamed, load_config, save_config
