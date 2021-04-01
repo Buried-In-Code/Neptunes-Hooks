@@ -6,7 +6,7 @@ from Hooks.common import parse_player_stats, parse_team_stats, request_data
 from Hooks.config import is_teamed, load_config, save_config
 from Hooks.discord import post_results as post_results_on_discord
 from Hooks.teams import post_results as post_results_on_teams
-from Logger import init_logger
+import PyLogger
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,5 +64,5 @@ def main():
 
 
 if __name__ == '__main__':
-    init_logger('Neptunes-Hooks')
+    PyLogger.init('Neptunes-Hooks')
     main()
