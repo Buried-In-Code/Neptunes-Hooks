@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 
-[![Code Analysis](https://img.shields.io/github/workflow/status/Macro303/Neptunes-Hooks/Code-Analysis?event=schedule&style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/actions/workflows/code-analysis.yml)
+[![Code Analysis](https://img.shields.io/github/workflow/status/Macro303/Neptunes-Hooks/Code-Analysis?label=Code-Analysis&logo=github&style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/actions/workflows/code-analysis.yml)
 
 A simple app that sends Neptune's Pride Stats to webhooks.  
 Currently, supports:
