@@ -1,5 +1,5 @@
 requests == 2.25.1
-PyYaml == 5.4.1
+ruamel.yaml == 0.17.9
 
 # From PyLogger submodule
 colorama == 0.4.4
