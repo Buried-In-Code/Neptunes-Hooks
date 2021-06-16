@@ -1,9 +1,11 @@
 # Neptune's Hooks
-[![Version](https://img.shields.io/github/tag-pre/Macro303/Neptunes-Hooks.svg?label=version&style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/releases)
-[![Issues](https://img.shields.io/github/issues/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/issues)
-[![Contributors](https://img.shields.io/github/contributors/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/graphs/contributors)
-[![License](https://img.shields.io/github/license/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Code Analysis](https://github.com/Macro303/Neptunes-Hooks/actions/workflows/code-analysis.yml/badge.svg)](https://github.com/Macro303/Neptunes-Hooks/actions/workflows/code-analysis.yml)
+[![Version](https://img.shields.io/github/tag-pre/Macro303/Neptunes-Hooks.svg?label=version)](https://github.com/Macro303/Neptunes-Hooks/releases)
+[![Issues](https://img.shields.io/github/issues/Macro303/Neptunes-Hooks.svg)](https://github.com/Macro303/Neptunes-Hooks/issues)
+[![Contributors](https://img.shields.io/github/contributors/Macro303/Neptunes-Hooks.svg)](https://github.com/Macro303/Neptunes-Hooks/graphs/contributors)
+[![License](https://img.shields.io/github/license/Macro303/Neptunes-Hooks.svg)](https://opensource.org/licenses/MIT)
+
+
+[![Code Analysis](https://github.com/Macro303/Neptunes-Hooks/actions/workflows/code-analysis.yml/badge.svg?event=schedule)](https://github.com/Macro303/Neptunes-Hooks/actions/workflows/code-analysis.yml)
 
 A simple app that sends Neptune's Pride Stats to webhooks.  
 Currently, supports:
