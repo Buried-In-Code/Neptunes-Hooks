@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from requests import post
 from requests.exceptions import ConnectionError, HTTPError
+from ruamel.yaml import CommentedMap
 
 LOGGER = logging.getLogger(__name__)
 TIMEOUT = 100
@@ -10,7 +11,7 @@ TIMEOUT = 100
 
 def post_results(player_results: Tuple[Dict[str, List[str]], List[str]],
                  team_results: Optional[Tuple[Dict[str, List[str]], List[str]]], turn: int, game_name: str,
-                 config: Dict[str, Any]):
+                 config: CommentedMap):
     post_player_results(leaders=player_results[0], overall=player_results[1], turn=turn, game_name=game_name,
                         config=config)
     if team_results:
@@ -19,7 +20,7 @@ def post_results(player_results: Tuple[Dict[str, List[str]], List[str]],
 
 
 def post_player_results(leaders: Dict[str, List[str]], overall: List[str], turn: int, game_name: str,
-                        config: Dict[str, Any]):
+                        config: CommentedMap):
     sections = [{
         'activityTitle': f"Welcome to Turn {turn:02}",
         'activitySubtitle': 'I\'ve crunched the numbers and here are the top Players for each stat.'
@@ -41,7 +42,7 @@ def post_player_results(leaders: Dict[str, List[str]], overall: List[str], turn:
 
 
 def post_team_results(leaders: Dict[str, List[str]], overall: List[str], turn: int, game_name: str,
-                      config: Dict[str, Any]):
+                      config: CommentedMap):
     sections = [{
         'activityTitle': f"Welcome to Turn {turn:02}",
         'activitySubtitle': 'I\'ve crunched the numbers and here are the top Teams for each stat.'
@@ -62,7 +63,7 @@ def post_team_results(leaders: Dict[str, List[str]], overall: List[str], turn: i
     }, config)
 
 
-def post_stats(content: Dict[str, Any], config: Dict[str, Any]):
+def post_stats(content: Dict[str, Any], config: CommentedMap):
     try:
         if not config['Webhooks']['Teams']:
             raise ConnectionError

@@ -2,11 +2,9 @@ import logging
 import time
 from argparse import ArgumentParser, Namespace
 
-from Hooks.common import parse_player_stats, parse_team_stats, request_data
-from Hooks.config import is_teamed, load_config, save_config
-from Hooks.discord import post_results as post_results_on_discord
-from Hooks.teams import post_results as post_results_on_teams
 import PyLogger
+from Hooks import parse_player_stats, parse_team_stats, request_data, is_teamed, load_config, save_config, \
+    post_results_on_discord, post_results_on_teams
 
 LOGGER = logging.getLogger(__name__)
 

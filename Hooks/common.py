@@ -4,8 +4,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from requests import post
 from requests.exceptions import ConnectionError, HTTPError
+from ruamel.yaml import CommentedMap
 
-from Hooks.config import get_team
+from .config import get_team
 
 LOGGER = logging.getLogger(__name__)
 TIMEOUT = 100
@@ -13,7 +14,7 @@ STATS = ['Stars', 'Ships', 'Economy', '$/Turn', 'Industry', 'Ships/Turn', 'Scien
          'Terraforming', 'Experimentation', 'Weapons', 'Banking', 'Manufacturing']
 
 
-def parse_player_stats(data: Dict[str, Any], config: Dict[str, Any]) -> Tuple[Dict[str, List[str]], List[str]]:
+def parse_player_stats(data: Dict[str, Any], config: CommentedMap) -> Tuple[Dict[str, List[str]], List[str]]:
     player_stats = {}
     for index, stat in enumerate(STATS):
         max_value = -1
@@ -38,7 +39,7 @@ def parse_player_stats(data: Dict[str, Any], config: Dict[str, Any]) -> Tuple[Di
     return player_stats, __calculate_overall(player_stats)
 
 
-def generate_teams(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def generate_teams(data: Dict[str, Any], config: CommentedMap) -> Dict[str, Any]:
     team_stats = {}
     for username in config['Players'].keys():
         player_data = next(iter([it for it in data['Players'] if it['Username'] == username]), None)
@@ -63,7 +64,7 @@ def generate_teams(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, An
     return team_stats
 
 
-def parse_team_stats(data: Dict[str, Any], config: Dict[str, Any]) -> Optional[Tuple[Dict[str, List[str]], List[str]]]:
+def parse_team_stats(data: Dict[str, Any], config: CommentedMap) -> Optional[Tuple[Dict[str, List[str]], List[str]]]:
     teams = generate_teams(data, config)
     if not teams:
         return None
@@ -107,7 +108,7 @@ def __calculate_overall(data: Dict[str, List[str]]) -> List[str]:
     return leading
 
 
-def request_data(config: Dict[str, Any]) -> Dict[str, Any]:
+def request_data(config: CommentedMap) -> Dict[str, Any]:
     data = __request_data(config['Neptune\'s Pride']['Number'], config['Neptune\'s Pride']['Code'])
     if not data:
         return {}
