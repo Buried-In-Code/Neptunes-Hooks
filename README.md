@@ -13,8 +13,8 @@ Currently, supports:
 
 ## Built Using
 
-- [Python: 3.9.5](https://www.python.org/)
-- [pip: 21.1.2](https://pypi.org/project/pip/)
+- [Python: 3.9.6](https://www.python.org/)
+- [pip: 21.1.3](https://pypi.org/project/pip/)
 - [requests: 2.25.1](https://pypi.org/project/requests/)
 - [ruamel.yaml: 0.17.10](https://pypi.org/project/ruamel.yaml/)
 
