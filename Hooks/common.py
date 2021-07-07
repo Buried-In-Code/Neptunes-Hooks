@@ -108,8 +108,8 @@ def __calculate_overall(data: Dict[str, List[str]]) -> List[str]:
     return leading
 
 
-def request_data(config: CommentedMap) -> Dict[str, Any]:
-    data = __request_data(config['Neptune\'s Pride']['Number'], config['Neptune\'s Pride']['Code'])
+def request_data(game_id: int, api_code: str) -> Dict[str, Any]:
+    data = __request_data(game_id, api_code)
     if not data:
         return {}
     fields = ['total_stars', 'total_strength', 'total_economy', '$/Turn', 'total_industry', 'Ships/Turn',
@@ -141,31 +141,23 @@ def request_data(config: CommentedMap) -> Dict[str, Any]:
     }
 
 
-def __request_data(game_number: int, api_code: str) -> Dict[str, Any]:
-    LOGGER.debug(f"Looking for Game: `{game_number}`, using the key: `{api_code}`")
+def __request_data(game_id: int, api_code: str) -> Dict[str, Any]:
+    LOGGER.debug(f"Looking for Game: `{game_id}`, using the key: `{api_code}`")
     try:
         response = post(url='https://np.ironhelmet.com/api', headers={
             'User-Agent': 'Neptune\'s Hooks'
         }, timeout=TIMEOUT, data={
             'api_version': '0.1',
-            'game_number': game_number,
+            'game_number': game_id,
             'code': api_code
         })
         response.raise_for_status()
         LOGGER.info(f"{response.status_code}: POST - {response.url}")
         try:
             return response.json()['scanning_data']
-        except JSONDecodeError:
-            LOGGER.critical('Unable to parse the response message')
-            LOGGER.critical(f"Response: {response.text}")
+        except (JSONDecodeError, KeyError):
+            LOGGER.error(f"Unable to parse the response message: {response.text}")
             return {}
-        except KeyError:
-            LOGGER.critical('Unable to parse the response message')
-            LOGGER.critical(f"Response: {response.text}")
-            return {}
-    except HTTPError as err:
-        LOGGER.error(err)
-        return {}
-    except ConnectionError:
-        LOGGER.critical(f"Unable to access `https://np.ironhelmet.com/api`")
+    except (HTTPError, ConnectionError) as err:
+        LOGGER.error(f"Unable to access `https://np.ironhelmet.com/api`: {err}")
         return {}

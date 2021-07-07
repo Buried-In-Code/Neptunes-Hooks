@@ -1,11 +1,11 @@
 # Neptune's Hooks
-[![Version](https://img.shields.io/github/tag-pre/Macro303/Neptunes-Hooks.svg?label=version&style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/releases)
-[![Issues](https://img.shields.io/github/issues/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/issues)
-[![Contributors](https://img.shields.io/github/contributors/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/graphs/contributors)
-[![License](https://img.shields.io/github/license/Macro303/Neptunes-Hooks.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/github/tag-pre/Buried-In-Code/Neptunes-Hooks.svg?label=version&style=flat-square)](https://github.com/Buried-In-Code/Neptunes-Hooks/releases)
+[![Issues](https://img.shields.io/github/issues/Buried-In-Code/Neptunes-Hooks.svg?style=flat-square)](https://github.com/Buried-In-Code/Neptunes-Hooks/issues)
+[![Contributors](https://img.shields.io/github/contributors/Buried-In-Code/Neptunes-Hooks.svg?style=flat-square)](https://github.com/Buried-In-Code/Neptunes-Hooks/graphs/contributors)
+[![License](https://img.shields.io/github/license/Buried-In-Code/Neptunes-Hooks.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 
-[![Code Analysis](https://img.shields.io/github/workflow/status/Macro303/Neptunes-Hooks/Code-Analysis?label=Code-Analysis&logo=github&style=flat-square)](https://github.com/Macro303/Neptunes-Hooks/actions/workflows/code-analysis.yml)
+[![Code Analysis](https://img.shields.io/github/workflow/status/Buried-In-Code/Neptunes-Hooks/Code-Analysis?label=Code-Analysis&logo=github&style=flat-square)](https://github.com/Buried-In-Code/Neptunes-Hooks/actions/workflows/code-analysis.yml)
 
 A simple app that sends Neptune's Pride Stats to webhooks.  
 Currently, supports:
@@ -13,10 +13,10 @@ Currently, supports:
 
 ## Built Using
 
-- [Python: 3.9.2](https://www.python.org/)
-- [pip: 21.0.1](https://pypi.org/project/pip/)
+- [Python: 3.9.5](https://www.python.org/)
+- [pip: 21.1.2](https://pypi.org/project/pip/)
 - [requests: 2.25.1](https://pypi.org/project/requests/)
-- [ruamel.yaml: 0.17.9](https://pypi.org/project/ruamel.yaml/)
+- [ruamel.yaml: 0.17.10](https://pypi.org/project/ruamel.yaml/)
 
 ## Execution
 
