@@ -1,39 +1,21 @@
 import logging
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 from ruamel.yaml import YAML, CommentedMap
 
 LOGGER = logging.getLogger(__name__)
 TOP_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = {
-    'Neptune\'s Pride': {
-        'Game ID': -1,
-        'API Code': None,
-        'Tick Rate': 12,
-        'Last Tick': -1
-    },
-    'Players': {
-        'Username 1': {
-            'Team': None
-        },
-        'Username 2': {
-            'Team': None
-        },
-        'Username 3': {
-            'Team': None
-        }
-    },
-    'Webhooks': {
-        'Teams': None,
-        'Discord': None
-    }
+    "Neptune's Pride": {"Game ID": -1, "API Code": None, "Tick Rate": 12, "Last Tick": -1},
+    "Players": {"Username 1": {"Team": None}, "Username 2": {"Team": None}, "Username 3": {"Team": None}},
+    "Webhooks": {"Teams": None, "Discord": None},
 }
 
 
 def __yaml_setup() -> YAML:
     def null_representer(self, data):
-        return self.represent_scalar(u'tag:yaml.org,2002:null', u'~')
+        return self.represent_scalar("tag:yaml.org,2002:null", "~")
 
     yaml = YAML(pure=True)
     yaml.default_flow_style = False
@@ -45,8 +27,8 @@ def __yaml_setup() -> YAML:
 
 
 def save_config(data: CommentedMap):
-    config_file = TOP_DIR.joinpath('config.yaml')
-    with open(config_file, 'w', encoding='UTF-8') as yaml_file:
+    config_file = TOP_DIR.joinpath("config.yaml")
+    with open(config_file, "w", encoding="UTF-8") as yaml_file:
         __yaml_setup().dump(data, yaml_file)
 
 
@@ -61,9 +43,9 @@ def load_config() -> CommentedMap:
                         config[key][sub_key] = sub_value
         return config
 
-    config_file = TOP_DIR.joinpath('config.yaml')
+    config_file = TOP_DIR.joinpath("config.yaml")
     if config_file.exists():
-        with open(config_file, 'r', encoding='UTF-8') as yaml_file:
+        with open(config_file, "r", encoding="UTF-8") as yaml_file:
             data = __yaml_setup().load(yaml_file) or DEFAULT_CONFIG
     else:
         config_file.touch()
@@ -74,21 +56,21 @@ def load_config() -> CommentedMap:
 
 
 def get_team(username: str, config: CommentedMap) -> Optional[str]:
-    return config['Players'].get(username, {}).get('Team', None)
+    return config["Players"].get(username, {}).get("Team", None)
 
 
 def get_members(team: str, config: CommentedMap) -> List[str]:
     members = []
-    for username, details in config['Players'].items():
-        if details['Team'] == team:
+    for username, details in config["Players"].items():
+        if details["Team"] == team:
             members.append(username)
     return members
 
 
 def is_teamed(config: CommentedMap) -> bool:
     teamed = False
-    for username, player in config['Players'].items():
-        if player['Team'] is not None:
+    for username, player in config["Players"].items():
+        if player["Team"] is not None:
             teamed = True
     return teamed
 

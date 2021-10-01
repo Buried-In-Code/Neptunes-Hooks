@@ -1,16 +1,17 @@
 # =====Folders=====
-.idea/
-.venv/
 __pycache__/
+.pytest_cache/
+.tox/
+.venv/
 .vscode/
+.idea/
 logs/
+dist/
 
 # =====Files=====
+.coverage
+*.csv
 *.iml
-*.sqlite
-*.db
-*.yaml
-*.old
-*.json
 
 # =====Project=====
+config.yaml
