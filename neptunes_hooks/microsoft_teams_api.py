@@ -3,31 +3,33 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from requests import post
 from requests.exceptions import ConnectionError, HTTPError
-from ruamel.yaml import CommentedMap
+
+from neptunes_hooks.settings import WebhookConfig
+from neptunes_hooks.utils import HEADERS, TIMEOUT
 
 LOGGER = logging.getLogger(__name__)
-TIMEOUT = 100
 
 
-def post_results(
-    player_results: Tuple[Dict[str, List[str]], List[str]],
-    team_results: Optional[Tuple[Dict[str, List[str]], List[str]]],
+def push_data(
+    player_stats: Tuple[Dict[str, List[str]], List[str]],
+    team_stats: Optional[Tuple[Dict[str, List[str]], List[str]]],
     turn: int,
     game_name: str,
-    config: CommentedMap,
+    webhook: WebhookConfig,
 ):
-    post_player_results(
-        leaders=player_results[0], overall=player_results[1], turn=turn, game_name=game_name, config=config
+    player_stats = __format_player_stats(
+        leaders=player_stats[0], overall=player_stats[1], turn=turn, game_name=game_name
     )
-    if team_results:
-        post_team_results(
-            leaders=team_results[0], overall=team_results[1], turn=turn, game_name=game_name, config=config
-        )
+    __post_stats(content=player_stats, webhook=webhook)
+
+    if team_stats:
+        team_stats = __format_team_stats(leaders=team_stats[0], overall=team_stats[1], turn=turn, game_name=game_name)
+        __post_stats(content=team_stats, webhook=webhook)
 
 
-def post_player_results(
-    leaders: Dict[str, List[str]], overall: List[str], turn: int, game_name: str, config: CommentedMap
-):
+def __format_player_stats(
+    leaders: Dict[str, List[str]], overall: List[str], turn: int, game_name: str
+) -> Dict[str, Any]:
     sections = [
         {
             "activityTitle": f"Welcome to Turn {turn:02}",
@@ -40,20 +42,15 @@ def post_player_results(
         },
     ]
 
-    post_stats(
-        {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "title": f"{game_name} - Player Stats",
-            "sections": sections,
-        },
-        config,
-    )
+    return {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "title": f"{game_name} - Player Stats",
+        "sections": sections,
+    }
 
 
-def post_team_results(
-    leaders: Dict[str, List[str]], overall: List[str], turn: int, game_name: str, config: CommentedMap
-):
+def __format_team_stats(leaders: Dict[str, List[str]], overall: List[str], turn: int, game_name: str) -> Dict[str, Any]:
     sections = [
         {
             "activityTitle": f"Welcome to Turn {turn:02}",
@@ -66,24 +63,19 @@ def post_team_results(
         },
     ]
 
-    post_stats(
-        {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "title": f"{game_name} - Team Stats",
-            "sections": sections,
-        },
-        config,
-    )
+    return {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "title": f"{game_name} - Team Stats",
+        "sections": sections,
+    }
 
 
-def post_stats(content: Dict[str, Any], config: CommentedMap):
+def __post_stats(content: Dict[str, Any], webhook: WebhookConfig):
     try:
-        if not config["Webhooks"]["Teams"]:
-            raise ConnectionError
         response = post(
-            url=config["Webhooks"]["Teams"],
-            headers={"Content-Type": "application/json; charset=UTF-8", "User-Agent": "Neptune's Hooks"},
+            url=webhook.url,
+            headers=HEADERS,
             timeout=TIMEOUT,
             json={
                 "type": "message",
@@ -97,4 +89,4 @@ def post_stats(content: Dict[str, Any], config: CommentedMap):
     except HTTPError as err:
         LOGGER.error(err)
     except ConnectionError:
-        LOGGER.critical(f"Unable to access `{config['Webhooks']['Teams']}`")
+        LOGGER.critical(f"Unable to access `{webhook.url}`")

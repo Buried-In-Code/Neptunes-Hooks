@@ -12,6 +12,6 @@ dist/
 .coverage
 *.csv
 *.iml
+.python-version
 
 # =====Project=====
-config.yaml

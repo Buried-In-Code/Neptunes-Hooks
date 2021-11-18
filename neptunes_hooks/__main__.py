@@ -3,28 +3,37 @@ import time
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-import painted_logger
-
-from neptunes_hooks import (
-    is_teamed,
-    load_config,
-    parse_player_stats,
-    parse_team_stats,
-    post_to_discord,
-    post_to_teams,
-    request_data,
-    save_config,
-)
+from neptunes_hooks.discord_api import push_data as push_to_discord
+from neptunes_hooks.microsoft_teams_api import push_data as push_to_microsoft_teams
+from neptunes_hooks.neptunes_pride_api import pull_data
+from neptunes_hooks.settings import PlayerConfig, Settings
+from neptunes_hooks.utils import parse_player_stats, parse_team_stats, safe_get
 
 LOGGER = logging.getLogger("Neptunes-Hooks")
-
 TIMEOUT = 100
+SETTINGS = Settings()
+
+
+def setup_logging(debug: bool = False):
+    Path("logs").mkdir(exist_ok=True)
+    file_handler = logging.FileHandler("logs/Neptunes-Hooks.log")
+    file_handler.setLevel(logging.DEBUG if debug else logging.INFO)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO if debug else logging.WARNING)
+
+    logging.basicConfig(
+        format="[%(asctime)s] [%(levelname)-8s] {%(name)s} | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        level=logging.NOTSET,
+        handlers=[file_handler, stream_handler],
+    )
 
 
 def get_arguments() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument("-p", "--poll", nargs="?", const=30, type=int, default=30)
-    parser.add_argument("-t", "--teams", action="store_true")
+    parser.add_argument("-t", "--microsoft-teams", action="store_true")
     parser.add_argument("-d", "--discord", action="store_true")
     parser.add_argument("--debug", action="store_true")
     return parser.parse_args()
@@ -32,48 +41,37 @@ def get_arguments() -> Namespace:
 
 def main():
     args = get_arguments()
-    painted_logger.init(
-        root_path=Path(__file__).resolve().parent.parent,
-        file_level=logging.DEBUG if args.debug else logging.INFO,
-        console_level=logging.INFO if args.debug else logging.WARNING,
-    )
+    setup_logging(debug=args.debug)
 
-    config = load_config()
-    np_response = request_data(
-        game_id=config["Neptune's Pride"]["Game ID"], api_code=config["Neptune's Pride"]["API Code"]
-    )
-    LOGGER.debug(f"Neptune's Response: {np_response}")
-    while np_response and np_response["Active"]:
-        new_players = []
-        np_players = [player["Username"] for player in np_response["Players"] if player["Username"]]
-        for new_player in np_players:
-            if new_player not in config["Players"].keys():
-                config["Players"][new_player] = {"Team": None}
-                save_config(config)
-                new_players.append(new_player)
-        if np_response["Tick"] > config["Neptune's Pride"]["Last Tick"] or args.debug:
-            player_stats = parse_player_stats(np_response, config)
-            LOGGER.debug(player_stats)
+    response = pull_data(game_id=SETTINGS.game_id, api_code=SETTINGS.api_code)
+    while response and response["Active"]:
+        players = [x["Username"] for x in response["Players"] if x["Username"]]
+        for new_player in players:
+            if new_player not in [x.username for x in SETTINGS.players]:
+                SETTINGS.players.append(PlayerConfig(username=new_player))
+                SETTINGS.save()
 
-            team_stats = parse_team_stats(np_response, config) if is_teamed(config) else None
-            LOGGER.debug(team_stats)
+        if response["Tick"] > SETTINGS.last_tick or args.debug:
+            player_stats = parse_player_stats(response, SETTINGS.players)
+            team_stats = parse_team_stats(response, SETTINGS.players)
 
-            turn = int(np_response["Tick"] / config["Neptune's Pride"]["Tick Rate"])
-
-            if args.teams:
-                post_to_teams(player_stats, team_stats, turn, np_response["Title"], config)
+            turn = int(response["Tick"] / SETTINGS.tick_rate)
+            if args.microsoft_teams:
+                webhook = safe_get([x for x in SETTINGS.webhooks if x.service == "Microsoft Teams"])
+                if webhook:
+                    push_to_microsoft_teams(player_stats, team_stats, turn, response["Title"], webhook)
             if args.discord:
-                post_to_discord(player_stats, team_stats, turn, np_response["Title"], config)
-            config["Neptune's Pride"]["Last Tick"] = np_response["Tick"]
-            save_config(config)
+                webhook = safe_get([x for x in SETTINGS.webhooks if x.service == "Discord"])
+                if webhook:
+                    push_to_discord(player_stats, team_stats, turn, response["Title"], webhook)
+
+            SETTINGS.last_tick = response["Tick"]
+            SETTINGS.save()
             LOGGER.info("Waiting for next turn...")
         if args.debug:
             break
         time.sleep(args.poll * 60)
-        np_response = request_data(
-            game_id=config["Neptune's Pride"]["Game ID"], api_code=config["Neptune's Pride"]["API Code"]
-        )
-        LOGGER.debug(f"Neptune's Response: {np_response}")
+        response = pull_data(game_id=SETTINGS.game_id, api_code=SETTINGS.api_code)
 
 
 if __name__ == "__main__":
