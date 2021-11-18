@@ -76,7 +76,7 @@ class Settings:
             _yaml_setup().dump(self.dump(), yaml_file)
 
     def _validate(self) -> bool:
-        schema_file = TOP_DIR.joinpath("config.schema.yaml")
+        schema_file = TOP_DIR.joinpath("settings.schema.yaml")
         schema = make_schema(schema_file, parser="ruamel")
         data = make_data(self.settings_file, parser="ruamel")
 
