@@ -23,12 +23,13 @@ def _yaml_setup() -> YAML:
 
 
 class PlayerConfig:
-    def __init__(self, username: str = "", team: Optional[str] = None):
+    def __init__(self, username: str = "", name: Optional[str] = None, team: Optional[str] = None):
         self.username = username
+        self.name = name
         self.team: Optional[str] = team
 
     def dump(self) -> Dict[str, Any]:
-        return {"Username": self.username, "Team": self.team}
+        return {"Username": self.username, "Name": self.name, "Team": self.team}
 
 
 class WebhookConfig:
@@ -105,7 +106,7 @@ class Settings:
         players_data = data["Players"]
         players = []
         for player in players_data:
-            players.append(PlayerConfig(username=player["Username"], team=player["Team"]))
+            players.append(PlayerConfig(username=player["Username"], name=player["Name"], team=player["Team"]))
         self.players = players
 
         webhooks_data = data["Webhooks"]
