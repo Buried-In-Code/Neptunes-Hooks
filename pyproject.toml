@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Neptunes-Hooks"
-version = "2.1.0"
+version = "2.2.0"
 description = "A simple app that sends Neptune's Pride Stats to webhooks."
 license = "GPL-3.0-or-later"
 authors = ["Buried-In-Code <BuriedInCode@tuta.io>"]
