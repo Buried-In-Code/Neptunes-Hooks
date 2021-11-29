@@ -25,13 +25,13 @@ repos:
       - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
-        exclude: 'settings\.schema\.yaml'
+        exclude: '.+\.schema\.yaml'
       - id: end-of-file-fixer
         exclude_types: [ json ]
       - id: trailing-whitespace
         args: [ '--markdown-linebreak-ext=md' ]
   - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.6.0
+    rev: 0.7.1
     hooks:
       - id: check-github-workflows
   - repo: meta
