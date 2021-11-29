@@ -30,10 +30,6 @@ repos:
         exclude_types: [ json ]
       - id: trailing-whitespace
         args: [ '--markdown-linebreak-ext=md' ]
-  - repo: https://github.com/sirosen/check-jsonschema
-    rev: 0.7.1
-    hooks:
-      - id: check-github-workflows
   - repo: meta
     hooks:
       - id: check-hooks-apply
