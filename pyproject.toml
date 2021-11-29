@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Neptunes-Hooks"
-version = "2.1.0"
+version = "2.2.0"
 description = "A simple app that sends Neptune's Pride Stats to webhooks."
 license = "GPL-3.0-or-later"
 authors = ["Buried-In-Code <BuriedInCode@tuta.io>"]
@@ -31,6 +31,7 @@ python = "^3.7"
 requests = "^2.26.0"
 "ruamel.yaml" = "^0.17.17"
 yamale = "^4.0.2"
+rich = "^10.15.1"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.15.0"
