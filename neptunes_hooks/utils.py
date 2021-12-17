@@ -1,9 +1,7 @@
-import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from neptunes_hooks.settings import PlayerConfig
 
-LOGGER = logging.getLogger(__name__)
 HEADERS = {"Accept": "application/json", "Content-Type": "application/json", "User-Agent": "Neptune's Hooks"}
 TIMEOUT = 100
 STATS = [
@@ -32,7 +30,6 @@ def __calculate_overall(data: Dict[str, List[str]]) -> List[str]:
                 leading_count[player] += 1
             else:
                 leading_count[player] = 1
-    LOGGER.debug(f"Leading Count: {leading_count}")
     leading = []
     max_count = -1
     for player, count in leading_count.items():
@@ -41,7 +38,6 @@ def __calculate_overall(data: Dict[str, List[str]]) -> List[str]:
             max_count = count
         elif count == max_count:
             leading.append(player)
-    LOGGER.debug(f"Leader/s: {leading}")
     return leading
 
 

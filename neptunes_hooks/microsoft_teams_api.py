@@ -1,13 +1,13 @@
-import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from requests import post
 from requests.exceptions import ConnectionError, HTTPError
 
+from neptunes_hooks.console import ConsoleLog
 from neptunes_hooks.settings import WebhookConfig
 from neptunes_hooks.utils import HEADERS, TIMEOUT
 
-LOGGER = logging.getLogger(__name__)
+CONSOLE = ConsoleLog(__name__)
 
 
 def push_data(
@@ -21,10 +21,12 @@ def push_data(
         leaders=player_stats[0], overall=player_stats[1], turn=turn, game_name=game_name
     )
     __post_stats(content=player_stats, webhook=webhook)
+    CONSOLE.info("Pushed player stats to Microsoft Teams")
 
     if team_stats:
         team_stats = __format_team_stats(leaders=team_stats[0], overall=team_stats[1], turn=turn, game_name=game_name)
         __post_stats(content=team_stats, webhook=webhook)
+        CONSOLE.info("Pushed team stats to Microsoft Teams")
 
 
 def __format_player_stats(
@@ -85,8 +87,7 @@ def __post_stats(content: Dict[str, Any], webhook: WebhookConfig):
             },
         )
         response.raise_for_status()
-        LOGGER.info(f"{response.status_code}: POST - {response.url}")
     except HTTPError as err:
-        LOGGER.error(err)
+        CONSOLE.error(object_=err)
     except ConnectionError:
-        LOGGER.critical(f"Unable to access `{webhook.url}`")
+        CONSOLE.critical(f"Unable to access `{webhook.url}`")

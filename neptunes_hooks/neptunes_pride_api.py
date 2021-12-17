@@ -1,13 +1,13 @@
-import logging
 from json.decoder import JSONDecodeError
 from typing import Any, Dict
 
 from requests import post
 from requests.exceptions import ConnectionError, HTTPError
 
+from neptunes_hooks.console import ConsoleLog
 from neptunes_hooks.utils import HEADERS, STATS, TIMEOUT
 
-LOGGER = logging.getLogger(__name__)
+CONSOLE = ConsoleLog(__name__)
 
 
 def pull_data(game_id: str, api_code: str) -> Dict[str, Any]:
@@ -59,14 +59,13 @@ def __request_data(game_id: str, api_code: str) -> Dict[str, Any]:
             timeout=TIMEOUT,
         )
         if response.status_code == 200:
-            LOGGER.debug(f"{response.status_code}: POST - {response.url}")
             try:
                 data = response.json()["scanning_data"]
                 return data
             except (JSONDecodeError, KeyError):
-                LOGGER.critical(f"Unable to parse the response message: {response.text}")
+                CONSOLE.critical(f"Unable to parse the response message: {response.text}")
         else:
-            LOGGER.error(f"{response.status_code}: POST - {response.url} - {response.text}")
+            CONSOLE.error(f"{response.status_code}: POST - {response.url} - {response.text}")
     except (ConnectionError, HTTPError):
-        LOGGER.error("Unable to access: `https://np.ironhelmet.com/api`")
+        CONSOLE.error("Unable to access: `https://np.ironhelmet.com/api`")
     return {}

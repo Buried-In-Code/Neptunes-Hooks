@@ -1,11 +1,12 @@
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ruamel.yaml import YAML
 from yamale import YamaleError, make_data, make_schema, validate
 
-LOGGER = logging.getLogger(__name__)
+from neptunes_hooks.console import ConsoleLog
+
+CONSOLE = ConsoleLog(__name__)
 TOP_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -85,11 +86,11 @@ class Settings:
             validate(schema, data)
             return True
         except YamaleError as ye:
-            LOGGER.error("Validation failed")
+            CONSOLE.error("Validation failed")
             for result in ye.results:
-                LOGGER.error(f"Error validating data '{result.data}' with '{result.schema}'")
+                CONSOLE.error(f"Error validating data '{result.data}' with '{result.schema}'")
                 for error in result.errors:
-                    LOGGER.error(f"\t{error}")
+                    CONSOLE.error(f"\t{error}")
         return False
 
     def load(self):
