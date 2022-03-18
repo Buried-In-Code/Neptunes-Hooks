@@ -30,7 +30,7 @@ classifiers = [
 python = "^3.7"
 requests = "^2.26.0"
 "ruamel.yaml" = "^0.17.17"
-yamale = "^4.0.2"
+yamale = "^4.0.4"
 rich = "^10.15.2"
 
 [tool.poetry.dev-dependencies]
