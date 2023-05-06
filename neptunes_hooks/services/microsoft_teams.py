@@ -17,7 +17,7 @@ def _format_player_stats(
     sections = [
         {
             "activityTitle": f"Welcome to Turn {turn:02}",
-            "activitySubtitle": "I've crunched the numbers and here are the top Players for each stat.",
+            "activitySubtitle": "Here are the top Players for each stat.",
         },
         {
             "facts": [
@@ -47,7 +47,7 @@ def _format_team_stats(
     sections = [
         {
             "activityTitle": f"Welcome to Turn {turn:02}",
-            "activitySubtitle": "I've crunched the numbers and here are the top Teams for each stat.",
+            "activitySubtitle": "Here are the top Teams for each stat.",
         },
         {
             "facts": [
@@ -55,7 +55,8 @@ def _format_team_stats(
             ],
         },
         {
-            "text": f"Looking at the above table it appears everyone should keep a close eye on **{' and '.join(overall)}** as they seem to be all over this leaderboard",
+            "text": f"Everyone should keep a close eye on **{' and '.join(overall)}** as they're "
+            "all over this leaderboard",
         },
     ]
 
