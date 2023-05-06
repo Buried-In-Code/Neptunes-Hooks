@@ -1,6 +1,6 @@
 # Neptune's Hooks
 
-![Python](https://img.shields.io/badge/Python-3.7%20|%203.8%20|%203.9%20|%203.10%20|%203.11-green?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.7%20%7C%203.8%20%7C%203.9%20%7C%203.10%20%7C%203.11-green?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Beta-yellowgreen?style=flat-square)
 
 [![Hatch](https://img.shields.io/badge/Packaging-Hatch-4051b5?style=flat-square)](https://github.com/pypa/hatch)
@@ -28,11 +28,10 @@ A simple app that sends [Neptune's Pride](https://np.ironhelmet.com/) stats via 
 
 *You can find all these by using the `-h` or `--help` argument*
 
-| Argument | Flags | Type | Default | Description |
-| -------- | ----- | ---- | ------- | ----------- |
-| Poll | `-p`, `--poll` | int | 30 | Used to determine how long between polls to the Neptune's Pride API *(value in Minutes)* |
-| Microsoft Teams | `-t`, `--microsoft-teams` | bool | False | Run using Microsoft Teams hook |
-| Debug | `--debug` | bool | False | Used to skip the tick check and only run once |
+| Argument | Flags          | Type | Default | Description                                                                              |
+| -------- | -------------- | ---- | ------- | ---------------------------------------------------------------------------------------- |
+| Poll     | `-p`, `--poll` | int  | 30      | Used to determine how long between polls to the Neptune's Pride API *(value in Minutes)* |
+| Debug    | `--debug`      | bool | False   | Used to skip the tick check and only run once                                            |
 
 ## Socials
 

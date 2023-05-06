@@ -15,7 +15,6 @@ SETTINGS = Settings()
 def get_arguments() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument("-p", "--poll", nargs="?", const=30, type=int, default=30)
-    parser.add_argument("-t", "--microsoft-teams", action="store_true")
     parser.add_argument("--debug", action="store_true")
     return parser.parse_args()
 
@@ -30,7 +29,7 @@ def main() -> None:
         code=SETTINGS.neptunes_pride.api_code,
     )
     microsoft_teams = None
-    if args.microsoft_teams:
+    if SETTINGS.webhooks.microsoft_teams:
         microsoft_teams = MicrosoftTeams(url=SETTINGS.webhooks.microsoft_teams)
 
     response = neptunes_pride.pull_data()

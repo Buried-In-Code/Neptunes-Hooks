@@ -29,7 +29,7 @@ dependencies = [
   "requests >= 2.26.0",
   "rich >= 10.15.2",
   "tomli >= 2.0.1; python_version < \"3.11\"",
-  "tomli-w >= 1.0.0",
+  "tomli-w >= 1.0.0"
 ]
 description = "A simple app that sends Neptune's Pride Stats to webhooks."
 dynamic = ["version"]
@@ -86,7 +86,7 @@ select = [
   "C40",
   "C90",
   "COM",
-  #"D",
+  # "D",
   "DJ",
   "E",
   "ERA",
