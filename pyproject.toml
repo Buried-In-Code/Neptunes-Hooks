@@ -17,7 +17,6 @@ classifiers = [
   "Operating System :: POSIX :: Linux",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python",
@@ -26,8 +25,8 @@ classifiers = [
 dependencies = [
   "pydantic >= 1.10.7",
   "ratelimit >= 2.2.1",
-  "requests >= 2.26.0",
-  "rich >= 10.15.2",
+  "requests >= 2.30.0",
+  "rich >= 13.3.5",
   "tomli >= 2.0.1; python_version < \"3.11\"",
   "tomli-w >= 1.0.0"
 ]
@@ -37,11 +36,11 @@ keywords = []
 license = "GPL-3.0-or-later"
 name = "Neptunes-Hooks"
 readme = "README.md"
-requires-python = ">= 3.7"
+requires-python = ">= 3.8"
 
 [project.optional-dependencies]
 dev = [
-  "pre-commit >= 2.16.0"
+  "pre-commit >= 3.3.1"
 ]
 
 [project.scripts]
@@ -54,7 +53,7 @@ Source = "https://github.com/Buried-In-Code/Neptunes-Hooks"
 
 [tool.black]
 line-length = 100
-target-version = ["py310", "py311", "py37", "py38", "py39"]
+target-version = ["py310", "py311", "py38", "py39"]
 
 [tool.hatch.version]
 path = "neptunes_hooks/__init__.py"
@@ -123,7 +122,7 @@ select = [
   "YTT"
 ]
 show-fixes = true
-target-version = "py37"
+target-version = "py38"
 
 [tool.ruff.flake8-annotations]
 allow-star-arg-any = true

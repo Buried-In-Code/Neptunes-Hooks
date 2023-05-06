@@ -1,12 +1,16 @@
 __all__ = ["Settings"]
 
 from pathlib import Path
-from typing import ClassVar, List, Optional
+from typing import ClassVar, List
 
+try:
+    import tomllib as tomlreader  # Python >= 3.11
+except ModuleNotFoundError:
+    import tomli as tomlreader  # Python < 3.11
 import tomli_w as tomlwriter
-import tomllib as tomlreader
-from neptunes_hook import get_config_root
 from pydantic import BaseModel, Extra, Field
+
+from neptunes_hooks import get_config_root
 
 
 class SettingsModel(BaseModel):
@@ -18,20 +22,20 @@ class SettingsModel(BaseModel):
 
 
 class NeptunesPrideSettings(SettingsModel):
-    game_number: Optional[int] = None
-    api_code: Optional[str] = None
+    game_number: int = 0
+    api_code: str = ""
     tick_rate: int = 12
-    last_tick: Optional[int] = None
+    last_tick: int = 0
 
 
 class WebhookSettings(SettingsModel):
-    microsoft_teams: Optional[str] = None
+    microsoft_teams: str = ""
 
 
 class PlayerSettings(SettingsModel):
     username: str
-    name: Optional[str] = None
-    team: Optional[str] = None
+    name: str = ""
+    team: str = ""
 
 
 class _Settings(SettingsModel):

@@ -4,10 +4,10 @@ import logging
 from typing import Any, Dict
 
 from ratelimit import limits, sleep_and_retry
-from request import post
+from requests import post
 from requests.exceptions import ConnectionError, HTTPError, JSONDecodeError, ReadTimeout
 
-from neptunes_hooks.service.exceptions import ServiceError
+from neptunes_hooks.services.exceptions import ServiceError
 
 LOGGER = logging.getLogger(__name__)
 MINUTE = 60

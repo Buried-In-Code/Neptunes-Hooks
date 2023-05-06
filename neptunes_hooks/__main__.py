@@ -28,9 +28,14 @@ def main() -> None:
         game_number=SETTINGS.neptunes_pride.game_number,
         code=SETTINGS.neptunes_pride.api_code,
     )
+
     microsoft_teams = None
     if SETTINGS.webhooks.microsoft_teams:
         microsoft_teams = MicrosoftTeams(url=SETTINGS.webhooks.microsoft_teams)
+
+    if not microsoft_teams:
+        LOGGER.fatal("No webhooks were specified, closing down.")
+        return
 
     response = neptunes_pride.pull_data()
     while response and response.active:
