@@ -64,11 +64,9 @@ def parse_player_stats(
         player_titles = []
         for username in max_players:
             player_title = username
-            name = safe_get([x.name for x in players if x.username == username])
-            if name:
+            if name := safe_get([x.name for x in players if x.username == username]):
                 player_title += f" ({name})"
-            team_name = safe_get([x.team for x in players if x.username == username])
-            if team_name:
+            if team_name := safe_get([x.team for x in players if x.username == username]):
                 player_title += f" [{team_name}]"
             player_titles.append(player_title)
 
