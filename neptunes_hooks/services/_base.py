@@ -1,7 +1,7 @@
 __all__ = ["Service"]
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from ratelimit import limits, sleep_and_retry
 from requests import post
@@ -27,8 +27,8 @@ class Service:
     @limits(calls=20, period=MINUTE)
     def _perform_post_json_request(
         self,
-        params: Dict[str, str] = None,
-        body: Dict[str, Any] = None,
+        params: Optional[Dict[str, str]] = None,
+        body: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         if params is None:
             params = {}
@@ -62,8 +62,8 @@ class Service:
     @limits(calls=20, period=MINUTE)
     def _perform_post_data_request(
         self,
-        params: Dict[str, str] = None,
-        body: Dict[str, Any] = None,
+        params: Optional[Dict[str, str]] = None,
+        body: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         if params is None:
             params = {}
